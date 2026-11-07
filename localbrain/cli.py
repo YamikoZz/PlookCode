@@ -52,6 +52,9 @@ def parser():
     corpus.add_argument("--max-tokens", type=int, default=600_000_000)
     corpus.add_argument("--tokenizer", help="Reuse this tokenizer.json instead of training a new one "
                                             "(keeps earlier datasets compatible)")
+    corpus.add_argument("--checkpoint", help="Folder (e.g. on Google Drive) for periodic progress; "
+                                             "rerun the same command to resume after a lost machine")
+    corpus.add_argument("--checkpoint-minutes", type=float, default=60.0)
     anneal = sub.add_parser("build-anneal", help="High-quality data mix for the final LR-decay phase")
     anneal.add_argument("--tokenizer", required=True)
     anneal.add_argument("--code", nargs="+", required=True)
@@ -263,7 +266,8 @@ def main():
             from .hardware import be_polite
             be_polite()
             emit(build_corpus(args.code, args.english, args.output, args.vocab_size, args.max_tokens,
-                              tokenizer=args.tokenizer))
+                              tokenizer=args.tokenizer, checkpoint=args.checkpoint,
+                              checkpoint_minutes=args.checkpoint_minutes))
         elif args.command == "build-anneal":
             from .corpus import build_anneal
             from .hardware import be_polite

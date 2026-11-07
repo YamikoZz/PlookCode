@@ -8,7 +8,9 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import tempfile
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -89,23 +91,43 @@ def iter_documents(code_files, english_files, english_share, other_share, seed):
         yield item
 
 
+BATCH_DOCS = 4096  # documents per encode_batch call (and per checkpoint opportunity)
+
+
 def is_val(text):
     return hashlib.sha1(text[:2000].encode("utf-8", "replace")).digest()[0] < 2  # ~0.8%
 
 
 def build_corpus(code_files, english_files, output, vocab_size=16384, max_tokens=600_000_000,
                  english_share=0.15, other_share=0.35, tokenizer_chars=150_000_000, seed=7,
-                 tokenizer=None):
+                 tokenizer=None, checkpoint=None, checkpoint_minutes=60.0):
+    """Tokenize the deterministic document stream into train.bin / val.bin.
+
+    checkpoint: optional folder (e.g. on Google Drive). Every `checkpoint_minutes` the new bytes of
+    train.bin / val.bin are appended there with progress.json, so a lost machine can resume: the stream is
+    replayed (cheap: read + hash) up to the saved document count, and only the rest is encoded.
+    """
     output = Path(output)
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     output.parent.mkdir(parents=True, exist_ok=True)
+    settings = {"max_tokens": max_tokens, "english_share": english_share, "other_share": other_share,
+                "seed": seed, "sources": [Path(p).name for p in list(code_files) + list(english_files)]}
+    ckpt = Path(checkpoint) if checkpoint else None
+    progress = None
+    if ckpt and (ckpt / "progress.json").is_file():
+        progress = json.loads((ckpt / "progress.json").read_text(encoding="utf-8"))
+        if progress["settings"] != settings:
+            raise ValueError("Checkpoint was made with different corpus settings or sources")
     with tempfile.TemporaryDirectory(dir=output.parent) as scratch:
         folder = Path(scratch) / "dataset"
         folder.mkdir()
         # 1) Tokenizer: reuse an existing one (to stay compatible with earlier datasets)
         #    or train a fresh BPE from the first documents of the deterministic mixed stream.
-        if tokenizer:
+        if progress:
+            tok = Tokenizer.from_file(str(ckpt / "tokenizer.json"))
+            tok.save(str(folder / "tokenizer.json"))
+        elif tokenizer:
             tok = Tokenizer.from_file(str(tokenizer))
             tok.save(str(folder / "tokenizer.json"))
         else:
@@ -129,9 +151,24 @@ def build_corpus(code_files, english_files, output, vocab_size=16384, max_tokens
             tok.train_from_iterator(sample(), trainer=trainer)
             tok.save(str(folder / "tokenizer.json"))
         eos = tok.token_to_id("[EOS]")
-        # 2) Encode the full stream.
+        # 2) Encode the full stream (resuming after the checkpointed documents if any).
         counts, mix, docs = {"train": 0, "val": 0}, Counter(), 0
-        streams = {s: (folder / f"{s}.bin").open("wb") for s in counts}
+        skip = 0
+        if progress:
+            counts, mix, skip = dict(progress["tokens"]), Counter(progress["mix"]), progress["docs"]
+            for s in counts:  # restore exactly the checkpointed bytes (uint16 = 2 bytes per token)
+                with (ckpt / f"{s}.bin").open("rb") as src, (folder / f"{s}.bin").open("wb") as dst:
+                    shutil.copyfileobj(src, dst, 16 << 20)
+                    dst.truncate(counts[s] * 2)
+            print(json.dumps({"resume": {"docs": skip, "tokens": counts}}), flush=True)
+        elif ckpt:
+            ckpt.mkdir(parents=True, exist_ok=True)
+            tok.save(str(ckpt / "tokenizer.json"))
+            for s in counts:
+                (ckpt / f"{s}.bin").write_bytes(b"")
+        streams = {s: (folder / f"{s}.bin").open("ab") for s in counts}
+        synced = {s: counts[s] * 2 for s in counts}
+        last_sync = time.monotonic()
         batch = []
 
         def flush():
@@ -143,16 +180,45 @@ def build_corpus(code_files, english_files, output, vocab_size=16384, max_tokens
                 mix[kind] += len(ids)
             batch.clear()
 
+        def sync():
+            """Append new bytes to the checkpoint, then record progress (bytes first, so progress never
+            points past data that is not there; extra bytes are cut off on resume)."""
+            for s, stream in streams.items():
+                stream.flush()
+                size = counts[s] * 2
+                with (folder / f"{s}.bin").open("rb") as src, (ckpt / f"{s}.bin").open("r+b") as dst:
+                    dst.truncate(synced[s])
+                    dst.seek(synced[s])
+                    src.seek(synced[s])
+                    remaining = size - synced[s]
+                    while remaining:
+                        chunk = src.read(min(remaining, 16 << 20))
+                        dst.write(chunk)
+                        remaining -= len(chunk)
+                synced[s] = size
+            temp = ckpt / "progress.tmp"
+            temp.write_text(json.dumps({"settings": settings, "docs": docs, "tokens": counts,
+                                        "mix": dict(mix)}), encoding="utf-8")
+            os.replace(temp, ckpt / "progress.json")
+            print(json.dumps({"checkpoint": {"docs": docs, "tokens": dict(counts)}}), flush=True)
+
         try:
             for kind, text in iter_documents(code_files, english_files, english_share, other_share, seed):
-                batch.append(("val" if is_val(text) else "train", kind, text))
                 docs += 1
-                if len(batch) >= 4096:
+                if docs <= skip:
+                    continue
+                batch.append(("val" if is_val(text) else "train", kind, text))
+                if len(batch) >= BATCH_DOCS:
                     flush()
                     print(json.dumps({"docs": docs, "tokens": counts}), flush=True)
                     if counts["train"] >= max_tokens:
                         break
+                    if ckpt and time.monotonic() - last_sync >= checkpoint_minutes * 60:
+                        sync()
+                        last_sync = time.monotonic()
             flush()
+            if ckpt:
+                sync()
         finally:
             for s in streams.values():
                 s.close()
