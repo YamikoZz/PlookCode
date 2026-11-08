@@ -56,12 +56,17 @@ def main():
                     teacher.append(r)
         depth += 1
 
+    # Fewer distinct teacher rows than slots: give each a "repeat" weight (train split only, see
+    # localbrain.instruction) so the coding-task share of training examples matches A.
+    base, extra = (slots // len(teacher), slots % len(teacher)) if teacher else (0, 0)
+    repeats = [base + (i < extra) for i in range(len(teacher))]
     with open(args.out, "w", encoding="utf-8") as f:
         for r in keep:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        for r in teacher:
+        for r, n in zip(teacher, repeats):
             f.write(json.dumps({"question": r["question"], "answer": r["answer"], "source": r["source"],
-                                "kind": r["kind"], "language": r["language"]}, ensure_ascii=False) + "\n")
+                                "kind": r["kind"], "language": r["language"], "repeat": n},
+                               ensure_ascii=False) + "\n")
 
     def tokens(rows):
         if not args.tokenizer:
@@ -82,12 +87,16 @@ def main():
               "kinds": dict(collections.Counter(r["kind"] for r in teacher)),
               "languages": dict(collections.Counter(r["language"] for r in teacher))},
         "shared_rows": len(keep), "shared_tokens": tk_keep,
-        "slot_shortfall": slots - len(teacher),
+        "distinct_slot_shortfall": slots - len(teacher),
+        "repeat_per_teacher_row": f"{base}-{base + 1}" if extra else str(base),
+        "coding_task_slots_after_repeat": sum(repeats),
         "bytes_B": Path(args.out).stat().st_size,
     }
     if tk_keep is not None:
-        for k in ("A", "B"):
-            report[k]["total_tokens"] = tk_keep + report[k]["coding_task_tokens"]
+        report["A"]["total_tokens"] = tk_keep + report["A"]["coding_task_tokens"]
+        report["B"]["total_tokens_distinct"] = tk_keep + report["B"]["coding_task_tokens"]
+        report["B"]["coding_task_tokens_after_repeat"] = sum(
+            n * t for n, t in zip(repeats, [report["B"]["coding_task_tokens"] / max(1, len(teacher))] * len(teacher)))
     Path(args.out).with_suffix(".report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps(report, indent=2))
 

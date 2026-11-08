@@ -57,7 +57,7 @@ fi
 if [ ! -s $AB/sft-200m-B.jsonl ]; then
   python scripts/build_dataset_b.py --a $D/sft-200m.jsonl --teacher $AB/distill2-verified.jsonl \
     --out $AB/sft-200m-B.jsonl --tokenizer $D/run-200m/tokenizer.json > /content/buildb.out 2>&1
-  log "B built: $(python -c "import json;r=json.load(open('$AB/sft-200m-B.report.json'));print({k:r[k] for k in ('A','B','slot_shortfall')})")"
+  log "B built: $(python -c "import json;r=json.load(open('$AB/sft-200m-B.report.json'));print({k:r[k] for k in ('A','B','repeat_per_teacher_row','coding_task_slots_after_repeat')})")"
   python scripts/contamination_report.py $D/sft-200m.jsonl $AB/sft-200m-B.jsonl --raw /content/raw-hf \
     --output $AB/contamination.json > /dev/null 2>&1
   log "contamination: $(python -c "import json;print([(r['rows'],r['hits']) for r in json.load(open('$AB/contamination.json'))])")"

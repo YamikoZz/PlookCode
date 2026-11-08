@@ -49,7 +49,9 @@ def read_pairs(source):
         digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
         bucket = int(digest[:8], 16) % 20
         split = "test" if bucket == 0 else "val" if bucket == 1 else "train"
-        yield {"question": question, "answer": answer, "split": split, "group": digest}
+        repeat = row.get("repeat", 1) if isinstance(row, dict) else 1
+        repeat = repeat if isinstance(repeat, int) and 1 <= repeat <= 20 else 1
+        yield {"question": question, "answer": answer, "split": split, "group": digest, "repeat": repeat}
 
 
 def prepare_instructions(source, output, cfg, tokenizer=None):
@@ -91,7 +93,9 @@ def prepare_instructions(source, output, cfg, tokenizer=None):
                     if len(ids) > cfg.context + 1:
                         dropped[split] = dropped.get(split, 0) + 1
                         continue
-                    encoded.append({"ids": ids, "answer_start": len(prompt)})
+                    # Optional oversampling weight: repeated only in train; val/test keep one copy.
+                    copies = pair.get("repeat", 1) if split == "train" else 1
+                    encoded.extend({"ids": ids, "answer_start": len(prompt)} for _ in range(copies))
                     stream.write(json.dumps(pair, ensure_ascii=False) + "\n")
             if len(encoded) < 2:
                 raise ValueError(f"Need at least two fitting examples in {split}")
@@ -104,7 +108,8 @@ def prepare_instructions(source, output, cfg, tokenizer=None):
                 "source_sha256": fingerprint(source),
                 "source": str(Path(source).resolve()),
                 "split": "SHA256 of normalized question: 90/5/5; tokenizer trained on train only",
-                "loss": "assistant tokens and EOS only; prompt and padding ignored"}
+                "loss": "assistant tokens and EOS only; prompt and padding ignored",
+                "oversampled_train_rows": sum(p.get("repeat", 1) - 1 for p in pairs if p["split"] == "train")}
         (folder / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
         os.replace(folder, output)
     return meta
