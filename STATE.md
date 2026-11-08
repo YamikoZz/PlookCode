@@ -8,7 +8,14 @@
 - 2026-11-08 chat-probes รุ่น 200M-SFT: Python is_even ✅, JS sum_list ✅, Lua factorial ✗ (คืน table), อธิบาย for loop วกวน
   => เขียนโค้ด Py/JS ได้จริง (ก้าวจาก 20M ที่โจทย์ใหม่ 0%); Lua + สนทนาทั่วไปยังอ่อน
 - 2026-11-08 ติด: repo.zip บน Colab เป็น snapshot เก่า ไม่มี `--suite`/exam.py -> อัป repo-cur.zip ใหม่ unzip /content/lbcur แล้วสอบใหม่
-- code-eval (core 196 + exam 90) กำลังรันบน G4 — ผลยังไม่ออก
+- 2026-11-08 ผล code-eval รุ่น 200M-SFT (step 1500, model-only, samples 8):
+  core: seen/python pass@1 **0.78** (pass@8 0.829), seen/js pass@1 **0.866** (0.89);
+        unseen/python pass@1 **0.125** (pass@8 0.25), unseen/js pass@1 **0.0**
+  exam (90 ข้อ Lua/TS/JS ไม่เคยเห็น): **0/90 ทุกภาษา** (pass@1 0.0)
+  ตรวจคำตอบจริง: เขียนไวยากรณ์ถูก (JS/TS valid) แต่ตอบโจทย์ผิด เช่น count_peaks -> `filter(x>0)`; Lua ยัง error/มั่ว
+  => สรุปตรงไปตรงมา: **จำรูปแบบที่เคยเห็นได้ดี (78-87%) แต่ยังไม่ generalize โจทย์ใหม่** (เหมือน 20M; unseen/py ขยับ 0->12.5%, และเขียนภาษาถูกแล้ว)
+  ไฟล์ผลเก็บที่ `workspace/eval-200m/` (code-eval.json, exam-eval.json, chat-probes.json)
+- 2026-11-08 ปิด G4 (`colab stop`), ไม่มี session ค้าง, units 106.22, rate 0/hr. โมเดลอยู่ที่ Drive `run-200m-sft/`
 
 # PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
