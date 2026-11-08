@@ -33,6 +33,24 @@
   บทเรียน: best.pt ถูกเลือกด้วย val ของ replay -> เป็น step 1 (= โมเดลเดิม) สอบครั้งแรกเลยได้ผลเดิมเป๊ะ;
   แก้ colab_distill.sh ให้สอบ latest.pt จากโฟลเดอร์ -final เสมอ. ใช้ ~11.3 units, เหลือ 94.88. ปิด G4 แล้ว
   สรุปตรงๆ: ปริมาณ distill เล็ก (1.5k ปน 1:8) ยังไม่ขยับ; อาจเป็นเพดาน 210M ด้วย. ผล `workspace/eval-distill1/`
+- 2026-11-09 **ทดลอง A/B ข้อมูล (dataset ทำให้ generalize ไม่ได้หรือเปล่า?)** `scripts/colab_ab.sh` บน G4
+  A = run-200m-sft (step 1500, โจทย์โค้ดแม่แบบ 70,000 ข้อ จาก 41 แบบ)
+  B = base เดียวกัน (run-200m step 7600), config เดียวกัน (code-sft-200m.json 1,500 steps), tokenizer เดียวกัน, แถวอื่นเหมือนเดิม
+      เปลี่ยนแค่ 70,000 ช่องโจทย์โค้ด -> ข้อฝึกจากครู Qwen2.5-Coder-32B ที่ตรวจด้วยการรันแล้ว 16,093 ข้อ / **3,809 แนวคิด**
+      (write 7,102 / plan 6,266 / predict 2,165 / debug 560; py/js/ts/lua) ซ้ำ 4-5 รอบให้ครบ 70,000 ช่อง (train เท่านั้น)
+  ตัดข้อสอบ: ชื่อ/แนวคิด exam + held-out + HumanEval, 13-gram; contamination exam = 0 ทั้งคู่
+  ข้อควรรู้ (confound): token โจทย์โค้ดหลังซ้ำ B 14.25M vs A 6.75M; B val_loss 0.929 vs A 0.886
+  **ผล** (ตัวเลขคือข้อผ่าน pass@1 greedy; plain = ปิด repetition penalty / no-repeat-ngram)
+  | ชุด | A เดิม | A plain | B เดิม | B plain |
+  | core 196 | 137 | **170** | 29 | 86 |
+  | core unseen py/js (16/16) | 2/0 | 6/0 | 1/0 | **10/5** |
+  | exam 90 (ไม่เคยเห็น Lua/TS/JS) | 0 | 0 | 0 | **4** (pass@8 12/90) |
+  | HumanEval complete / instruct (164) | 0/2 | 7/15 | 0/1 | 6/13 |
+  | HumanEval ชุดสะอาด 97 ข้อ (ตัดชื่อที่โผล่ในข้อมูลเทรน) | 0/2 | 1/6 | 0/0 | 2/6 |
+  สรุป: ข้อมูลหลากหลายทำให้ **โจทย์แบบใหม่ขยับครั้งแรก** (exam 0->4/90, unseen 6->15/32) แต่เสียโจทย์แม่แบบที่ A ท่องมา (170->86)
+  และ HumanEval เท่าเดิม (~8%) -> dataset เป็นสาเหตุส่วนหนึ่งจริง แต่ยังไกลจากใช้งาน; ขนาดข้อมูลครู (16k) และ 210M อาจจำกัดอยู่
+  decoding plain ดีกว่าเสมอ (ยังไม่เปลี่ยนในแชท รอผู้ใช้ตัดสิน). ผลทั้งหมด `workspace/ab/` (summary.json), run-B บน Drive `LocalBrain-200m/ab/run-B`
+  ปิด G4 แล้ว ไม่มี session ค้าง, units เหลือ 61.27
 
 # PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
