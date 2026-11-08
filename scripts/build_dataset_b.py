@@ -16,6 +16,7 @@ import argparse
 import collections
 import json
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -40,8 +41,18 @@ def main():
     removed = [r for r in a_rows if is_template(r)]
     slots = len(removed)
 
-    by_concept = collections.defaultdict(list)
+    # Exam and held-out task names must not appear even as helper functions inside teacher code
+    # (e.g. a nested `def count_divisors(n)` IS the exam task's answer).
+    from localbrain.exam import FAMILIES as EXAM
+    from localbrain.tasks import FAMILIES, HELD_OUT
+    reserved = set(EXAM) | {n for fam in HELD_OUT for n in FAMILIES[fam]["names"]}
+    reserved_call = re.compile(r"\b(" + "|".join(sorted(map(re.escape, reserved))) + r")\s*\(")
+    by_concept, reserved_dropped = collections.defaultdict(list), collections.Counter()
     for r in (json.loads(l) for l in open(args.teacher, encoding="utf-8") if l.strip()):
+        hit = reserved_call.search(r["question"]) or reserved_call.search(r["answer"])
+        if hit:
+            reserved_dropped[hit.group(1)] += 1
+            continue
         by_concept[r["concept"]].append(r)
     concepts = list(by_concept)
     random.Random(args.seed).shuffle(concepts)
@@ -87,6 +98,7 @@ def main():
               "kinds": dict(collections.Counter(r["kind"] for r in teacher)),
               "languages": dict(collections.Counter(r["language"] for r in teacher))},
         "shared_rows": len(keep), "shared_tokens": tk_keep,
+        "teacher_rows_dropped_reserved_name": dict(reserved_dropped),
         "distinct_slot_shortfall": slots - len(teacher),
         "repeat_per_teacher_row": f"{base}-{base + 1}" if extra else str(base),
         "coding_task_slots_after_repeat": sum(repeats),
