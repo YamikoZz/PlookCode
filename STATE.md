@@ -131,6 +131,11 @@
   วัด batch 8 accum 32: 23.6 วิ/step (batch 4 = 23.9) เร็วขึ้นแค่ ~1%, VRAM 16.3 GiB -> GPU เต็มกำลังแล้ว ใช้ batch 4
   งบจริง: 7,600 x 23.6s ~= 50 ชม. x 1.94/ชม. ~= 97 units > ที่มี 94 -> ผู้ใช้ต้องเติมเอง ~10-15 units
   สร้าง corpus 4B ใหม่บน CPU (0.08/ชม.) ลง Drive ครั้งเดียว ใช้ซ้ำทุก session (resume ต้องใช้ meta.json เดิม)
+- 2026-11-08 ย้ายเทรน 200M จาก L4 -> G4 (RTX PRO 6000 Blackwell 96GB, 10.05 units/ชม.) ที่ step 750
+  วัดจริง: 3.62 วิ/step (L4 23.5) = เร็ว 6.5 เท่า, ถูกกว่าต่อ step (~0.010 vs ~0.0127 units/step)
+  resume ถูกต้อง (step 751 val 1.660 = เดิม), step 1000 val 1.582; save_every=600 (~36 นาที)
+  คาดจบ pretrain ~17:30-18:00 น. 8 พ.ย., ใช้ ~67 units; balance 78.26 ณ 10:50 -> ต้องเติม ~5-10 สำหรับ anneal/SFT/eval
+  บทเรียน: .sh จาก Windows มี CRLF -> bash บน Colab error; เพิ่ม .gitattributes `*.sh eol=lf`
 - 2026-11-08 ข้อสอบใหม่ `localbrain/exam.py`: 30 แบบ × Lua/TS/JS = 90 ข้อ, 8 เทสต์/ข้อ, ห้ามใช้เทรน
   (ยากกว่า tasks.py: grid, inversions, bucket, caesar, camel_to_snake ฯลฯ; ไม่คืน index เพราะ Lua เริ่ม 1)
   วัดด้วย `code-eval --suite exam` (คำตอบยาวสุด 400 token) -> `exam-eval.json`
