@@ -2,6 +2,7 @@
 import json
 
 from .assistant import answer, ingest, research
+from .tools import auto_math
 
 HELP = """ตอนนี้ช่วยค้นเอกสาร ค้นเว็บ เก็บความรู้ และเรียกเครื่องมือได้
 /help หรือ ทำอะไรได้บ้าง — ดูคำสั่ง
@@ -110,9 +111,15 @@ class Chat:
             else:
                 raise ValueError("ไม่รู้จักคำสั่งนี้ พิมพ์ /help เพื่อดูคำสั่ง")
         elif self.predictor is not None:
-            generated = self.predictor.reply(query)
-            result = response(generated or "[โมเดลจบคำตอบโดยไม่สร้างข้อความ]", "learned_model")
-            result["note"] = "สร้างจากน้ำหนักโมเดลทดลองโดยตรง อาจผิดหรือแต่งข้อมูล"
+            computed = auto_math(query)
+            if computed is not None:
+                expression, value = computed
+                result = response(f"{expression} = {value}", "computed")
+                result["note"] = "คิดด้วยโค้ด (เครื่องคิดเลข) ไม่ใช่การเดาของโมเดล จึงถูกต้องแน่นอน"
+            else:
+                generated = self.predictor.reply(query)
+                result = response(generated or "[โมเดลจบคำตอบโดยไม่สร้างข้อความ]", "learned_model")
+                result["note"] = "สร้างจากน้ำหนักโมเดลทดลองโดยตรง อาจผิดหรือแต่งข้อมูล"
         else:
             result = answer(self.tools.knowledge, query, self.run, self.use_web, self.device)
         self.last = result

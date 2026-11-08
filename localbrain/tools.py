@@ -1,6 +1,7 @@
 import ast
 import math
 import operator
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -40,6 +41,56 @@ def calculate(expression):
         return value
 
     return visit(tree.body)
+
+
+# "Math via code": turn a natural-language arithmetic question into an expression and compute it
+# with calculate() (safe AST eval, no execution), instead of letting the model guess the digits.
+_LEAD = ("what is", "what's", "whats", "what does", "calculate", "compute", "evaluate",
+         "how much is", "how much", "solve", "work out", "tell me")
+_WORD_PATTERNS = [
+    (re.compile(r"(?:the\s+)?sum of\s+(-?\d[\d.]*)\s+and\s+(-?\d[\d.]*)"), "{0}+{1}"),
+    (re.compile(r"add\s+(-?\d[\d.]*)\s+(?:and|to|\+)\s+(-?\d[\d.]*)"), "{0}+{1}"),
+    (re.compile(r"(?:the\s+)?product of\s+(-?\d[\d.]*)\s+and\s+(-?\d[\d.]*)"), "{0}*{1}"),
+    (re.compile(r"multiply\s+(-?\d[\d.]*)\s+(?:and|by|with|\*)\s+(-?\d[\d.]*)"), "{0}*{1}"),
+    (re.compile(r"subtract\s+(-?\d[\d.]*)\s+from\s+(-?\d[\d.]*)"), "{1}-{0}"),
+    (re.compile(r"divide\s+(-?\d[\d.]*)\s+by\s+(-?\d[\d.]*)"), "{0}/{1}"),
+]
+_WORD_OPS = ((" plus ", "+"), (" minus ", "-"), (" multiplied by ", "*"), (" times ", "*"),
+             (" divided by ", "/"), (" modulo ", "%"), (" mod ", "%"))
+_EXPR_ONLY = re.compile(r"^[0-9+\-*/%(). ]+$")
+
+
+def auto_math(query):
+    """Return (expression, value) when the whole query is an arithmetic question, else None."""
+    if not isinstance(query, str) or len(query) > 256:
+        return None
+    q = query.strip().casefold().rstrip("?!. ")
+    changed = True
+    while changed:
+        changed = False
+        for lead in _LEAD:
+            if q.startswith(lead):
+                q = q[len(lead):].strip(" :"); changed = True
+    for pattern, template in _WORD_PATTERNS:
+        m = pattern.fullmatch(q)
+        if m:
+            expr = template.format(*m.groups())
+            break
+    else:
+        expr = q
+        for word, symbol in _WORD_OPS:
+            expr = expr.replace(word, symbol)
+        expr = expr.replace("^", "**").strip()
+        if not (_EXPR_ONLY.fullmatch(expr) and re.search(r"\d", expr)
+                and re.search(r"[+\-*/%]", expr)):
+            return None
+    try:
+        value = calculate(expr.replace("^", "**"))
+    except (ValueError, SyntaxError, ZeroDivisionError):
+        return None
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    return expr, value
 
 
 class Tools:

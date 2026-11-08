@@ -16,6 +16,12 @@
   => สรุปตรงไปตรงมา: **จำรูปแบบที่เคยเห็นได้ดี (78-87%) แต่ยังไม่ generalize โจทย์ใหม่** (เหมือน 20M; unseen/py ขยับ 0->12.5%, และเขียนภาษาถูกแล้ว)
   ไฟล์ผลเก็บที่ `workspace/eval-200m/` (code-eval.json, exam-eval.json, chat-probes.json)
 - 2026-11-08 ปิด G4 (`colab stop`), ไม่มี session ค้าง, units 106.22, rate 0/hr. โมเดลอยู่ที่ Drive `run-200m-sft/`
+- 2026-11-08 โหลดโมเดลลงเครื่องผู้ใช้: `workspace/run-200m-sft/` (best.pt 1.6GB + tokenizer.json ผ่าน colab download ตรง 1.6GB ได้)
+  `Try-200M.cmd` เปิดแชท CPU (`chat --model-only --device cpu`); โหลด 2 วิ ตอบ 1 วิ/คำถาม
+- 2026-11-08 **A5 เครื่องคิดเลขในแชท** (บางส่วน): `tools.auto_math` แปลงคำถามเลขเป็น expression แล้วคิดด้วย `calculate()` (AST ปลอดภัย)
+  wire ใน `chat.py` โหมด model-only -> ถามเลขได้คำตอบถูก 100% (25*10=250, 48+76=124), คำถามโค้ดไม่โดนจับ
+  tests/test_automath.py (3 เทสต์) ผ่าน; ชุดทดสอบรวม 91 ผ่าน (skip 2 lua)
+  ยังไม่ทำ: โจทย์เลขแบบประโยค/หลายขั้น (ต้องให้โมเดลเขียนโค้ดแล้วรันในแซนด์บ็อกซ์ — เครื่องบ้านไม่มี Docker)
 
 # PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
