@@ -77,7 +77,7 @@ def loose_json(text):
         pass
     try:  # Python-style literals (True/False/None, single quotes)
         return ast.literal_eval(fixed.replace("true", "True").replace("false", "False").replace("null", "None"))
-    except (ValueError, SyntaxError):
+    except Exception:  # noqa: BLE001 - any malformed teacher text just means "unparseable"
         return None
 
 
@@ -143,7 +143,10 @@ def parse(row):
 
 # ---------- execution ----------
 def check(row):
-    item, reason = parse(row)
+    try:
+        item, reason = parse(row)
+    except Exception:  # noqa: BLE001 - one odd teacher answer must never stop the whole run
+        return row, None, "parse_crash", None
     if reason:
         return row, None, reason, None
     language = row["language"]
