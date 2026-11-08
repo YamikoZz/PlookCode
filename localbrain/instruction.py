@@ -19,8 +19,8 @@ def prompt_text(question):
 
 def read_pairs(source):
     path = Path(source)
-    if path.stat().st_size > 128 * 1024 * 1024:
-        raise ValueError("Instruction file exceeds 128 MiB")
+    if path.stat().st_size > 256 * 1024 * 1024:
+        raise ValueError("Instruction file exceeds 256 MiB")
     text = path.read_text(encoding="utf-8")
     rows = [json.loads(line) for line in text.split("\n") if line.strip()] if path.suffix == ".jsonl" else json.loads(text)
     if not isinstance(rows, list):

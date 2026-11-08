@@ -123,6 +123,17 @@ def parser():
     code_eval.add_argument("--suite", choices=["core", "exam"], default="core",
                            help="core: seen/unseen Python+JS families; exam: Lua/TS/JS tasks never used in training")
     code_eval.add_argument("--max-tokens", type=int, help="Answer length limit (default 200 core, 400 exam)")
+    code_eval.add_argument("--plain", action="store_true",
+                           help="Plain decoding (no repetition penalty / n-gram ban); writes *-plain.json")
+    code_eval.add_argument("--checkpoint", help="Checkpoint file to score (default: <run>/best.pt, else latest.pt)")
+    he = sub.add_parser("humaneval", help="HumanEval pass@1 (official tests run only with LOCALBRAIN_SANDBOX=1)")
+    he.add_argument("--run", required=True)
+    he.add_argument("--data", default="workspace/raw-hf/eval/humaneval.parquet")
+    he.add_argument("--output", help="Default: <run>/humaneval[-plain].json")
+    he.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    he.add_argument("--plain", action="store_true", help="No repetition penalty / n-gram ban")
+    he.add_argument("--checkpoint", help="Checkpoint file (default: <run>/best.pt, else latest.pt)")
+    he.add_argument("--formats", nargs="+", default=["complete", "instruct"], choices=["complete", "instruct"])
     code = sub.add_parser("code", help="Write a function, verified against your examples")
     code.add_argument("task", help="What the function should do")
     code.add_argument("--function", required=True, help="Function name")
@@ -316,12 +327,16 @@ def main():
             emit(evaluate_instruction(args.run, args.data, args.output))
         elif args.command == "code-eval":
             from .coder import evaluate_code
-            name = "code-eval.json" if args.suite == "core" else "exam-eval.json"
+            name = ("code-eval" if args.suite == "core" else "exam-eval") + ("-plain" if args.plain else "") + ".json"
             output = args.output or str(Path(args.run) / name)
             per_family = args.per_family if args.suite == "core" or args.per_family != 2 else 1
             emit(evaluate_code(args.run, output, args.samples, per_family, args.device,
                                agent=args.agent, repair_rounds=args.repair_rounds, suite=args.suite,
-                               max_tokens=args.max_tokens))
+                               max_tokens=args.max_tokens, plain=args.plain, checkpoint=args.checkpoint))
+        elif args.command == "humaneval":
+            from .humaneval import evaluate
+            output = args.output or str(Path(args.run) / ("humaneval" + ("-plain" if args.plain else "") + ".json"))
+            emit(evaluate(args.run, args.data, output, args.device, args.plain, args.checkpoint, tuple(args.formats)))
         elif args.command == "code":
             from .coder import CodeModel, Library, solve
             from .tasks import LANGUAGES

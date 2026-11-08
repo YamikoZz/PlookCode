@@ -46,9 +46,14 @@ class CodeModel:
         self.tokenizer = Tokenizer.from_file(str(self.run / "tokenizer.json"))
         self.eos = self.tokenizer.token_to_id("[EOS]")
         self.max_tokens = 200
+        # Chat-style anti-repetition (default) vs plain decoding (standard for code benchmarks):
+        # code legitimately repeats identifiers and n-grams, so evaluate_code(plain=True) turns these off.
+        self.repetition_penalty, self.no_repeat_ngram = 1.3, 3
 
     def sample(self, question, n=1, temperature=0.8, top_k=40, max_tokens=None, greedy=False,
-               repetition_penalty=1.3, no_repeat_ngram=3, raw=False):
+               repetition_penalty=None, no_repeat_ngram=None, raw=False):
+        repetition_penalty = self.repetition_penalty if repetition_penalty is None else repetition_penalty
+        no_repeat_ngram = self.no_repeat_ngram if no_repeat_ngram is None else no_repeat_ngram
         ids = [self.tokenizer.token_to_id("[BOS]")] + self.tokenizer.encode(prompt_text(question)).ids
         max_tokens = max_tokens or self.max_tokens
         room = self.cfg.context - len(ids)
@@ -164,14 +169,16 @@ PUBLIC_TESTS = 3  # agent mode: tests the agent may see as feedback; the rest st
 
 
 def evaluate_code(run, output, samples=8, per_family=2, device="auto", languages=None,
-                  agent=False, repair_rounds=1, suite="core", max_tokens=None):
+                  agent=False, repair_rounds=1, suite="core", max_tokens=None, plain=False, checkpoint=None):
     """Benchmark split into seen vs unseen task families.
 
     model-only: greedy pass@1 and pass@samples, one answer per try, no feedback.
     agent (optional): solve() samples, runs the PUBLIC tests and repairs from their error messages;
     the chosen code is then scored on ALL tests, so hidden tests decide. No solution library is used.
     """
-    model = CodeModel(run, device)
+    model = CodeModel(run, device, checkpoint)
+    if plain:
+        model.repetition_penalty, model.no_repeat_ngram = 1.0, 0
     if suite == "exam":  # Lua/TS/JS tasks that never appear in training data (localbrain/exam.py)
         from .exam import LANGUAGES as EXAM_LANGUAGES, exam
         languages = tuple(languages or EXAM_LANGUAGES)
@@ -215,6 +222,8 @@ def evaluate_code(run, output, samples=8, per_family=2, device="auto", languages
         return out
 
     report = {"checkpoint_step": model.step, "run": str(run), "suite": suite, "samples": samples,
+              "decoding": {"repetition_penalty": getattr(model, "repetition_penalty", None),
+                           "no_repeat_ngram": getattr(model, "no_repeat_ngram", None)},
               "modes": {"model_only": "pass@1_greedy / pass@k: model answers alone, no feedback",
                         "agent": (f"agent_pass: solve() with {repair_rounds} repair round(s), feedback from "
                                   f"{PUBLIC_TESTS} public tests, scored on all tests; no library")
