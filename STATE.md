@@ -1,3 +1,15 @@
+# PlookCode — สถานะล่าสุด 2026-11-08 (เย็น): รุ่น 200M เทรน+SFT เสร็จ
+
+- 2026-11-08 รุ่น 193M (G4) เทรนหลักครบ 7,600 steps, val_loss 10→**1.229** (exit 0, ~6.9 ชม., 3.62 วิ/step, ไม่หลุดเลย)
+- 2026-11-08 SFT 200M: สร้างชุดรวม 160,056 ข้อ (chat-v4 116,951 + hf-code ตัด Python เหลือ ~38k เก็บ Lua/JS/TS/C/C++ ครบ + ai-gen 436)
+  -> `prepare-instructions` context 2048 reuse tokenizer -> train 119,712 / val 6,646 / test 6,604 (ไฟล์ SFT ต้อง <128 MiB)
+  SFT `configs/code-sft-200m.json` 1,500 steps --init จาก run-200m -> val_loss **0.886** (~8 นาที). run บน Drive `run-200m-sft`
+  สคริปต์ `scripts/colab_200m_sft.sh` (resumable บน Drive)
+- 2026-11-08 chat-probes รุ่น 200M-SFT: Python is_even ✅, JS sum_list ✅, Lua factorial ✗ (คืน table), อธิบาย for loop วกวน
+  => เขียนโค้ด Py/JS ได้จริง (ก้าวจาก 20M ที่โจทย์ใหม่ 0%); Lua + สนทนาทั่วไปยังอ่อน
+- 2026-11-08 ติด: repo.zip บน Colab เป็น snapshot เก่า ไม่มี `--suite`/exam.py -> อัป repo-cur.zip ใหม่ unzip /content/lbcur แล้วสอบใหม่
+- code-eval (core 196 + exam 90) กำลังรันบน G4 — ผลยังไม่ออก
+
 # PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
 - เป้าหมายชัดเจนแล้ว: **Vibe Coding AI** สั่งงานภาษาอังกฤษ → เขียนโค้ด → รันตรวจ → แก้จนผ่าน
