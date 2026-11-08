@@ -1,4 +1,4 @@
-"""Import public, AI-generated code SFT datasets into LocalBrain's {"question", "answer"} JSONL.
+"""Import public, AI-generated code SFT datasets into PlookCode's {"question", "answer"} JSONL.
 
 Sources (licenses checked 2026-11-08 via the Hugging Face API):
   selfoss    bigcode/self-oss-instruct-sc2-exec-filter-50k  ODC-By   StarCoder2-generated, execution-filtered, Python

@@ -1,4 +1,6 @@
-# LocalBrain
+# PlookCode
+
+*ชื่อเดิม LocalBrain (เปลี่ยนชื่อ 2026-11-08 เพราะชื่อซ้ำกับโปรเจกต์อื่น) — แพ็กเกจ Python และคำสั่งยังใช้ `localbrain` เหมือนเดิม*
 
 [English](README.md) · **ภาษาไทย**
 
@@ -9,8 +11,8 @@
   (ดาวน์โหลดเฉพาะชุดข้อมูล)
 - มีคลังความรู้ SQLite FTS5, ค้น/อ่านเว็บ และเครื่องมือที่เรียกผ่าน CLI
 - แผนสถาปัตยกรรม: [ROADMAP.md](ROADMAP.md) · สถานะและตัวเลขล่าสุด: [STATE.md](STATE.md)
-- คู่มืออ่านง่าย: [Wiki](https://github.com/YamikoZz/LocalBrain/wiki)
-- เปเปอร์ (technical report, อังกฤษ): [docs/paper/LocalBrain-technical-report.md](docs/paper/LocalBrain-technical-report.md)
+- คู่มืออ่านง่าย: [Wiki](https://github.com/YamikoZz/PlookCode/wiki)
+- เปเปอร์ (technical report, อังกฤษ): [docs/paper/PlookCode-technical-report.md](docs/paper/PlookCode-technical-report.md)
 
 ## สถานะปัจจุบัน (2026-11-08)
 
@@ -39,7 +41,7 @@
 | ได้ ✅ | ยังไม่ได้ ❌ |
 |---|---|
 | โค้ดทั้งหมด (MIT License): ตัวสร้าง/เทรนโมเดล, tokenizer, Agent, ระบบรันเทสต์, คลังความรู้, ค้นเว็บ | **ตัวโมเดลที่เทรนเสร็จแล้ว** — ยังไม่แจก (จะแจกเมื่อคุณภาพพร้อม) |
-| pipeline เทรนครบชุด + notebook Colab + คู่มือ ([Wiki](https://github.com/YamikoZz/LocalBrain/wiki)) | ใช้เป็น AI เขียนโค้ดได้ทันที (ต้องเทรนเองก่อน) |
+| pipeline เทรนครบชุด + notebook Colab + คู่มือ ([Wiki](https://github.com/YamikoZz/PlookCode/wiki)) | ใช้เป็น AI เขียนโค้ดได้ทันที (ต้องเทรนเองก่อน) |
 
 - **สายเทคนิค:** ศึกษาหรือเทรนเองได้ รุ่น 20M ใช้ Colab T4 ไม่ถึง 50 บาท (ดูขั้นตอนด้านล่าง)
 - **คนทั่วไปที่อยากได้ AI ไว้ใช้:** ตอนนี้ยังใช้ไม่ได้ ต้องรอแจกตัวโมเดล
@@ -78,7 +80,7 @@ HumanEval ในตารางเป็นค่าโดยประมาณ�
 (ไม่ตั้ง = `configs/code-pretrain-big.json` สำหรับ GPU 4 GB, บน Colab ใช้ `configs/code-pretrain-colab.json`)
 
 ### เทรนบน Google Colab
-ดู [notebooks/README.md](notebooks/README.md) และ `notebooks/LocalBrain_Colab.ipynb`
+ดู [notebooks/README.md](notebooks/README.md) และ `notebooks/PlookCode_Colab.ipynb`
 
 ### สร้างข้อมูล SFT
 
@@ -128,7 +130,7 @@ HumanEval ในตารางเป็นค่าโดยประมาณ�
 ├── Open-Model.cmd
 ├── .gitignore
 ├── notebooks/
-│   ├── LocalBrain_Colab.ipynb # เทรนบน Colab T4
+│   ├── PlookCode_Colab.ipynb # เทรนบน Colab T4
 │   └── README.md
 ├── configs/
 │   ├── code-pretrain-big.json   # pretrain GPU 4 GB
@@ -292,7 +294,7 @@ RAM กับ VRAM ไม่ได้รวมเป็นหน่วยคว�
 .\.venv\Scripts\python.exe -m localbrain chat --model-only --run workspace/run-instruction
 ```
 
-หรือดับเบิลคลิก **Open-Model.cmd** เปิดหน้าต่างไทยชื่อ LocalBrain Learned Model
+หรือดับเบิลคลิก **Open-Model.cmd** เปิดหน้าต่างไทยชื่อ PlookCode Learned Model
 โหมดนี้คำถามทั่วไปทั้งหมด รวม hello และ ทำอะไรได้บ้าง ส่งเข้าโมเดลจริง
 ไม่มีคำตอบตายตัวและไม่ค้นเอกสารอัตโนมัติ; /help และคำสั่ง /... ยังเป็นเครื่องมือที่สั่งเองได้
 โมเดลโหลดค้างครั้งเดียวต่อ session เลือก best.pt ถ้ามี ไม่โหลดใหม่ทุกคำถาม
@@ -349,7 +351,7 @@ loss ไม่ใช่คะแนนความถูกต้องของ
 
 หาก PowerShell แสดงภาษาไทยเป็นสี่เหลี่ยม ให้ดับเบิลคลิก **Open-Chat.cmd**
 เพื่อเปิดแชทใน IDLE ของ Python ที่ติดตั้งอยู่แล้ว โดยไม่แก้ฟอนต์ระบบ
-หน้าต่างชื่อ LocalBrain Thai Chat; พิมพ์หลัง คุณ> แล้วกด Enter
+หน้าต่างชื่อ PlookCode Thai Chat; พิมพ์หลัง คุณ> แล้วกด Enter
 อ่านคำสั่งเปิด shell ได้ที่ [คู่มือ IDLE](https://docs.python.org/3/library/idle.html#command-line-usage)
 
 

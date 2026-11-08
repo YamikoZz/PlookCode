@@ -31,7 +31,7 @@
 ผู้ช่วย: ยังไม่มี ความสามารถขึ้นอยู่กับข้อมูลและการฝึก ต้องตรวจสอบผลก่อนนำไปใช้
 ผู้ใช้: วันนี้ฉันอยากเรียนรู้
 ผู้ช่วย: เริ่มจากหัวข้อเล็ก ๆ ทดลอง วัดผล และปรับปรุงทีละขั้น
-LocalBrain is a small language model trained from scratch.
+PlookCode is a small language model trained from scratch.
 Training predicts the next token and adjusts model parameters.
 A knowledge store retrieves documents; it does not update model weights.
 The CPU prepares data and can keep optimizer states in RAM.

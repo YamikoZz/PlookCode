@@ -1,4 +1,4 @@
-"""The LocalBrain agent: all 9 steps in one loop.
+"""The PlookCode agent: all 9 steps in one loop.
 
     1. request      -> keywords                                   (projindex.keywords)
     2. check code   -> index the project, find relevant functions (projindex)
@@ -13,7 +13,7 @@
 The tests decide. A change is kept only when the project's tests pass afterwards; without
 tests nothing is written unless the caller explicitly allows an unverified change.
 
-The brain is pluggable: ModelBrain uses a LocalBrain checkpoint; ScriptedBrain replays
+The brain is pluggable: ModelBrain uses a PlookCode checkpoint; ScriptedBrain replays
 given patches (tests and demos). The 20M model is far too small to write useful patches;
 the loop is built so a bigger model can be dropped in without changing it.
 """
@@ -41,7 +41,7 @@ class ScriptedBrain:
 
 
 class ModelBrain:
-    """A LocalBrain checkpoint writes the patch. Prompt is trimmed to the model's context."""
+    """A PlookCode checkpoint writes the patch. Prompt is trimmed to the model's context."""
     def __init__(self, run, device="auto", max_tokens=300):
         from .coder import CodeModel
         self.model = CodeModel(run, device=device)

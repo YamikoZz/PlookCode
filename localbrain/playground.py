@@ -44,7 +44,7 @@ def main(run, device="auto", max_tokens=160, temperature=0.6):
     model, tok, step, kind = load(run, device)
     device = next(model.parameters()).device
     instruct = kind == "instruction"
-    print(f"LocalBrain playground | {run} | step {step} | "
+    print(f"PlookCode playground | {run} | step {step} | "
           + ("chat model: type a message" if instruct
              else "base model (not a chat model yet): it continues the text you type"))
     print("Press Enter to send. End a line with \\ to type more lines. Commands: /reload, /exit\n")

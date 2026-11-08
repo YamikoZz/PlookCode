@@ -1,4 +1,4 @@
-# LocalBrain — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
+# PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
 - เป้าหมายชัดเจนแล้ว: **Vibe Coding AI** สั่งงานภาษาอังกฤษ → เขียนโค้ด → รันตรวจ → แก้จนผ่าน
   เน้นโค้ดหลายภาษา และคณิต/ฟิสิกส์ผ่านโค้ด แผนสถาปัตยกรรมอยู่ใน ROADMAP.md
@@ -6,7 +6,7 @@
   Muon + WSD schedule, FP32
 - Corpus `dataset-code-big`: 319,223,829 train tokens (โค้ด 8 shards + FineWeb-Edu, โค้ด ~85%)
   ใช้ tokenizer เดิม (sha256 ff5386c5...) ทุก dataset จึงใช้ร่วมกันได้
-- เทรนบน Google Colab T4 ฟรี (`notebooks/LocalBrain_Colab.ipynb`, config `code-pretrain-colab.json`)
+- เทรนบน Google Colab T4 ฟรี (`notebooks/PlookCode_Colab.ipynb`, config `code-pretrain-colab.json`)
   - batch 32, 24,000 steps = 393M tokens (~1.2 epoch), ~1.05 วินาที/step, ใช้ VRAM ~8.8/15 GB
   - ลดจาก 48,000 steps เพราะ batch 32 จะเห็นข้อมูลซ้ำ ~2.5 รอบ
   - ล่าสุด step 14,000: val_loss 9.84 → 2.177 ยังลดลงต่อเนื่อง
@@ -52,7 +52,7 @@
   Python แยกด้วย ast (ไม่รันโค้ด), JS/TS/Lua/C/C++/Go/Rust/Ruby/PHP/Shell/SQL ด้วย regex, ไฟล์ไม่มีฟังก์ชัน = module
   ชื่อตัวแปรถูกแยกคำ (check_password → check password) ให้คำสั่งภาษาอังกฤษค้นเจอ, อัปเดตเฉพาะไฟล์ที่เปลี่ยน, ข้าม node_modules/.venv/workspace
   คำสั่ง: `index-project --root .` และ `find-code "คำขอ"`; เทสต์ใหม่ 8 รายการผ่าน
-  ลองกับโค้ด LocalBrain เอง: 49 ไฟล์ 301 ฟังก์ชัน ใน 0.27 วินาที ไฟล์ดัชนี ~1 MB
+  ลองกับโค้ด PlookCode เอง: 49 ไฟล์ 301 ฟังก์ชัน ใน 0.27 วินาที ไฟล์ดัชนี ~1 MB
   ค้น "resume training from a checkpoint" เจอ train.py/checkpoint_save, "split identifier into words" เจอ projindex
   จุดอ่อน: ไฟล์เทสต์มักติดอันดับต้นเพราะมีคำซ้ำเยอะ
 - 2026-11-07 Phase A รอบ A2 เสร็จ: คลังกลาง + Stack Overflow
@@ -131,6 +131,9 @@
   วัด batch 8 accum 32: 23.6 วิ/step (batch 4 = 23.9) เร็วขึ้นแค่ ~1%, VRAM 16.3 GiB -> GPU เต็มกำลังแล้ว ใช้ batch 4
   งบจริง: 7,600 x 23.6s ~= 50 ชม. x 1.94/ชม. ~= 97 units > ที่มี 94 -> ผู้ใช้ต้องเติมเอง ~10-15 units
   สร้าง corpus 4B ใหม่บน CPU (0.08/ชม.) ลง Drive ครั้งเดียว ใช้ซ้ำทุก session (resume ต้องใช้ meta.json เดิม)
+- 2026-11-08 เปลี่ยนชื่อโปรเจกต์ LocalBrain -> **PlookCode** (ชื่อเดิมซ้ำคนอื่น; ค้น GitHub ไม่พบ repo ชื่อ PlookCode)
+  เปลี่ยนเฉพาะชื่อที่คนเห็น + ข้อความแนะนำตัวใน chatdata/make_conversation; คงชื่อแพ็กเกจ `localbrain`,
+  โฟลเดอร์ Drive `LocalBrain-200m`, `/content/LocalBrain` ใน pipeline, ชื่อชุดข้อมูล v4 ภายนอก
 - 2026-11-08 ย้ายเทรน 200M จาก L4 -> G4 (RTX PRO 6000 Blackwell 96GB, 10.05 units/ชม.) ที่ step 750
   วัดจริง: 3.62 วิ/step (L4 23.5) = เร็ว 6.5 เท่า, ถูกกว่าต่อ step (~0.010 vs ~0.0127 units/step)
   resume ถูกต้อง (step 751 val 1.660 = เดิม), step 1000 val 1.582; save_every=600 (~36 นาที)
@@ -178,13 +181,13 @@
   มี v4 แล้วเขียนถูกภาษา (Luau, C++, SQL) แต่ logic ติดเทมเพลต เช่นบวกเลขได้ `a + b - a * b`
   TypeScript ยังออกมาเป็น JavaScript ไม่มี type → ทางแก้ที่ดีกว่าคือขยายโจทย์จริงใน tasks.py ไป Luau/TS/C++
 
-# LocalBrain — สถานะ 2026-11-06 (เช้า)
+# PlookCode — สถานะ 2026-11-06 (เช้า)
 
 - เพิ่ม offensive-security training content: `localbrain/extra.py` มี `offensive_collect` (รวบรวม malware analysis + attack toolkits จาก subfolder ของ markdown) และ `offensive_lessons` (บทเรียน question/answer สำหรับ malware + ATT&CK/C2/Metasploit/reverse shell/threat modeling)
 - CLI ใหม่: `localbrain collect-offensive --root <folder> --output <jsonl>`; `build-anneal` รับ `--extra NAME=PATH --extra-share` สำหรับใส่ offensive source ใน final anneal mix
 - tests ใหม่ `tests/test_extra.py` ผ่านทั้งหมด 36 รายการ (exit 0)
 
-# LocalBrain — สถานะล่าสุด 2026-11-02
+# PlookCode — สถานะล่าสุด 2026-11-02
 
 - เป้าหมาย: โมเดลฝึกเองที่สร้างคำตอบจากน้ำหนักจริง พร้อมเครื่องมือและคลังความรู้ในเครื่อง
 - อนุมัติล่าสุด: ผู้ใช้สั่งให้เลือกวิธีและฝึกเอง ไม่ใช้ chatbot ตอบด้วยกติกาแทนโมเดล

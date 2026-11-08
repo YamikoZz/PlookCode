@@ -10,7 +10,7 @@ def emit(value):
 
 
 def emit_chat(result):
-    print("\nLocalBrain>")
+    print("\nPlookCode>")
     for line in result["answer"].splitlines():
         print(line)
     if result.get("note"):
@@ -383,7 +383,7 @@ def main():
                 else:
                     from .chat import Chat
                     session = Chat(tools, args.run, args.web, args.device, args.model_only)
-                    print("LocalBrain: พิมพ์ /help เพื่อดูความสามารถ; /exit เพื่อออก")
+                    print("PlookCode: พิมพ์ /help เพื่อดูความสามารถ; /exit เพื่อออก")
                     if args.model_only:
                         print("โหมดโมเดลฝึกเอง: คำถามทั่วไปเข้าโมเดลโดยตรง; ไม่มีคำตอบตายตัว")
                         print("โมเดลทดลอง ยังอาจตอบผิดหรือไม่รู้เรื่อง")
@@ -400,7 +400,7 @@ def main():
                             try:
                                 emit_chat(session.handle(query))
                             except Exception as error:
-                                print(f"\nLocalBrain> ทำรายการไม่สำเร็จ: {error}\n")
+                                print(f"\nPlookCode> ทำรายการไม่สำเร็จ: {error}\n")
     except KeyboardInterrupt:
         print("\nStopped.", file=sys.stderr)
         raise SystemExit(130)

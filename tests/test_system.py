@@ -40,7 +40,7 @@ class SystemTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             emit_chat(result)
-        self.assertIn("LocalBrain>", output.getvalue())
+        self.assertIn("PlookCode>", output.getvalue())
         self.assertIn("สวัสดี", output.getvalue())
         self.assertNotIn('"mode"', output.getvalue())
 

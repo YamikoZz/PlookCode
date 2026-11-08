@@ -1,6 +1,9 @@
-# LocalBrain
+# PlookCode
 
 **English** · [ภาษาไทย](README.th.md)
+
+*Formerly LocalBrain (renamed on 2026-11-08 to avoid a name clash). The Python package and commands are
+still `localbrain`.*
 
 **A code model built from scratch by one person on a hobby budget.** Every weight starts from random
 initialization. No Llama, Qwen or any other pretrained checkpoint is used, only public datasets.
@@ -14,11 +17,11 @@ the model to repair failures until the tests pass.
 | Next model | **193M parameters** on 4.0B tokens, training now on a Colab G4 GPU (step 1,000/7,600, val loss 1.58); ≈85 Colab units in total (≈$9, estimate) |
 | Honest scorecard | 66.8% on our in-domain suite, but **0% on held-out task types** (details below) |
 | Verified | Pass/fail of all 196 recorded answers re-checked independently, all matching |
-| Paper | [Technical report v0.1](docs/paper/LocalBrain-technical-report.md) |
+| Paper | [Technical report v0.1](docs/paper/PlookCode-technical-report.md) |
 
 ## Why this exists
 
-Most small "local" models are fine-tunes of big-company weights. LocalBrain asks a different question: **how far
+Most small "local" models are fine-tunes of big-company weights. PlookCode asks a different question: **how far
 can one person get when training everything themselves?** That covers the tokenizer, pretraining, fine-tuning,
 evaluation and the agent, on rented GPUs costing a few dollars.
 
@@ -48,7 +51,7 @@ scores **0/90**. It writes Python when asked for TypeScript or Lua.
 
 After an external review we fixed a leak in the benchmark: the prompt example used to be one of the scored tests.
 We also added a separate agent-assisted score, which gets feedback from 3 public tests and is scored on all tests.
-Section 5 of the [paper](docs/paper/LocalBrain-technical-report.md) has the details.
+Section 5 of the [paper](docs/paper/PlookCode-technical-report.md) has the details.
 
 **For context**, here are approximate published HumanEval scores (not measured by us): Codex-25M ≈3%, Codex-85M
 ≈8%, CodeGen-350M-mono ≈13%, phi-1-small (350M) ≈45%. The 193M model will be evaluated on HumanEval and MBPP.
@@ -66,7 +69,7 @@ Training data is decontaminated against both: the filter catches 164/164 and 500
 | `localbrain/knowledge.py`, `webtools.py` | SQLite FTS5 knowledge base, web search with cache |
 | `scripts/retrain.py` | One-command pipeline: pretrain → anneal → SFT → eval (resumable) |
 | `scripts/import_code_sft.py` | Imports public code SFT datasets with HumanEval/MBPP decontamination |
-| `notebooks/LocalBrain_Colab.ipynb` | Train on Google Colab |
+| `notebooks/PlookCode_Colab.ipynb` | Train on Google Colab |
 
 **Not included:** trained weights. They will be released once the quality is worth using. You can train the 20M
 model yourself on a free or cheap Colab T4.
@@ -103,10 +106,10 @@ Target languages: Python and Lua first, JavaScript and TypeScript as a pair, les
 
 ## Docs
 
-- [Technical report](docs/paper/LocalBrain-technical-report.md) (English)
+- [Technical report](docs/paper/PlookCode-technical-report.md) (English)
 - [STATE.md](STATE.md): running log of every run and number (Thai)
 - [ROADMAP.md](ROADMAP.md): architecture plan (Thai)
-- [Wiki](https://github.com/YamikoZz/LocalBrain/wiki): beginner guide (Thai)
+- [Wiki](https://github.com/YamikoZz/PlookCode/wiki): beginner guide (Thai)
 
 ## License
 

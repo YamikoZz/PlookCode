@@ -15,7 +15,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-USER_AGENT = "LocalBrain/0.2 (self-trained home-PC assistant)"
+USER_AGENT = "PlookCode/0.2 (self-trained home-PC assistant)"
 
 
 def _get_json(url, timeout=15):

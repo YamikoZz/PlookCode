@@ -1,6 +1,6 @@
-# เทรน LocalBrain บน Google Colab
+# เทรน PlookCode บน Google Colab
 
-`LocalBrain_Colab.ipynb` ย้ายการเทรนขึ้น Colab T4 ฟรี (15 GB VRAM) แทนคอมบ้าน (GTX 1650, 4 GB)
+`PlookCode_Colab.ipynb` ย้ายการเทรนขึ้น Colab T4 ฟรี (15 GB VRAM) แทนคอมบ้าน (GTX 1650, 4 GB)
 
 ## เตรียมครั้งเดียว
 1. สร้างโฟลเดอร์ `Google Drive ▸ MyDrive ▸ localbrain-workspace/`
@@ -8,7 +8,7 @@
    - `dataset-code-big/` (~615 MB) สำหรับ pretrain
    - `dataset-anneal/` (~155 MB) สำหรับ anneal
    - `dataset-english-sft/` (~82 MB) สำหรับ SFT
-3. เปิด `LocalBrain_Colab.ipynb` ใน Colab → **Runtime ▸ Change runtime type ▸ T4 GPU**
+3. เปิด `PlookCode_Colab.ipynb` ใน Colab → **Runtime ▸ Change runtime type ▸ T4 GPU**
 4. รัน cell 1 → 5 ตามลำดับ (cell 3 ต้องใช้ GitHub Personal Access Token สิทธิ์ `repo`)
 
 ## จุดสำคัญ

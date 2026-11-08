@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 API = "https://api.stackexchange.com/2.3"
-USER_AGENT = "LocalBrainResearch/0.1"
+USER_AGENT = "PlookCodeResearch/0.1"
 LICENSE = "CC BY-SA 4.0"
 
 

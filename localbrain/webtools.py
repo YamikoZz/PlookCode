@@ -8,7 +8,7 @@ import urllib.request
 import urllib.robotparser
 from html.parser import HTMLParser
 
-USER_AGENT = "LocalBrainResearch/0.1"
+USER_AGENT = "PlookCodeResearch/0.1"
 MAX_BYTES = 2 * 1024 * 1024
 
 

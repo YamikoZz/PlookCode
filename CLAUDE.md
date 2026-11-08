@@ -1,13 +1,14 @@
 # CLAUDE.md — คู่มือสำหรับ Claude ที่ทำงานใน repo นี้
 
 ## โปรเจกต์
-**LocalBrain** = Vibe Coding AI ที่เทรนเองจากศูนย์
+(เปลี่ยนชื่อจาก LocalBrain เป็น **PlookCode** 2026-11-08; แพ็กเกจ/คำสั่ง `localbrain`, โฟลเดอร์ Drive `LocalBrain-200m` ยังชื่อเดิม — อย่าเปลี่ยนระหว่างเทรน)
+**PlookCode** = Vibe Coding AI ที่เทรนเองจากศูนย์
 ผู้ใช้สั่งเป็นภาษาอังกฤษ → โมเดลเขียนโค้ด → Agent รันเทสต์ → แก้จนผ่าน
 เน้นโค้ดหลายภาษา, คณิต/ฟิสิกส์แก้ด้วยการเขียนโค้ดแล้วรัน (ไม่คิดเลขในหัว)
 ไม่ได้ตั้งเป้าแข่งโมเดลใหญ่ — ซื่อตรงเรื่องผลเสมอ (ผลดีก็บอก ผลแย่ก็บอก)
 
 อ่านก่อนเริ่มงานทุกครั้ง: [STATE.md](STATE.md) (สถานะ/ตัวเลขล่าสุด) และ [ROADMAP.md](ROADMAP.md) (แผน)
-คู่มืออ่านง่าย: https://github.com/YamikoZz/LocalBrain/wiki (repo แยก `LocalBrain.wiki.git`)
+คู่มืออ่านง่าย: https://github.com/YamikoZz/PlookCode/wiki (repo แยก `PlookCode.wiki.git`)
 
 ## กฎเหล็ก (ห้ามละเมิด)
 1. **ห้ามใช้น้ำหนักโมเดลสำเร็จรูป/โอเพนซอร์ส** (Llama, Qwen, ฯลฯ) ใช้ได้เฉพาะ *ชุดข้อมูล* เทรนเองทุกขั้น
@@ -45,7 +46,7 @@
 | `scripts/retrain.py` | pipeline corpus → pretrain → anneal → SFT → code-eval (ข้ามขั้นที่เสร็จ, resume ได้) |
 | `scripts/make_*.py`, `import_v4.py` | สร้าง/คัดข้อมูล SFT |
 | `configs/*-colab.json` | ค่าสำหรับ Colab T4 (ตั้งผ่าน `LOCALBRAIN_PRETRAIN_CONFIG`, `LOCALBRAIN_SFT_CONFIG`) |
-| `notebooks/LocalBrain_Colab.ipynb` | เทรนบน Colab |
+| `notebooks/PlookCode_Colab.ipynb` | เทรนบน Colab |
 
 ทดสอบ: `python -m unittest discover tests`
 

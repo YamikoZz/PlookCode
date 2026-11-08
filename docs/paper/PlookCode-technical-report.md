@@ -1,7 +1,7 @@
-# LocalBrain: A Code Model Trained From Scratch on a Hobby Budget
+# PlookCode: A Code Model Trained From Scratch on a Hobby Budget
 
 **Technical report, version 0.1 (2026-11-08)**, YamikoZz, with AI coding assistants
-Repository: https://github.com/YamikoZz/LocalBrain (MIT License)
+Repository: https://github.com/YamikoZz/PlookCode (MIT License)
 
 > Status: interim report. The 20M-parameter results are final and independently re-checked. The 193M-parameter
 > model is being trained at the time of writing, and **this report contains no results for it**. Section 9 will be
@@ -9,7 +9,7 @@ Repository: https://github.com/YamikoZz/LocalBrain (MIT License)
 
 ## Abstract
 
-LocalBrain is a code-writing language model and agent built by one person. Every model weight is trained from
+PlookCode is a code-writing language model and agent built by one person. Every model weight is trained from
 random initialization. No pretrained or open-weight checkpoints are used. The target use is "vibe coding": the
 user describes a function in English, the model writes code, and a local runner executes tests and asks the model
 to repair failures. We describe the architecture, data, and training of three model generations (6.9M, 20.5M and

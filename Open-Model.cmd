@@ -7,6 +7,6 @@ if not exist "workspace\run-instruction\latest.pt" (
     popd
     exit /b 1
 )
-start "LocalBrain Learned Model" ".venv\Scripts\pythonw.exe" -m idlelib -t "LocalBrain Learned Model" -c "import sys; sys.argv=['localbrain','chat','--model-only','--run','workspace/run-instruction']; from localbrain.cli import main; main()"
+start "PlookCode Learned Model" ".venv\Scripts\pythonw.exe" -m idlelib -t "PlookCode Learned Model" -c "import sys; sys.argv=['localbrain','chat','--model-only','--run','workspace/run-instruction']; from localbrain.cli import main; main()"
 popd
 endlocal
