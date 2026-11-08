@@ -120,6 +120,9 @@ def parser():
     code_eval.add_argument("--agent", action="store_true",
                            help="Also score agent-assisted solving (public-test feedback + repair, hidden-test scoring)")
     code_eval.add_argument("--repair-rounds", type=int, default=1)
+    code_eval.add_argument("--suite", choices=["core", "exam"], default="core",
+                           help="core: seen/unseen Python+JS families; exam: Lua/TS/JS tasks never used in training")
+    code_eval.add_argument("--max-tokens", type=int, help="Answer length limit (default 200 core, 400 exam)")
     code = sub.add_parser("code", help="Write a function, verified against your examples")
     code.add_argument("task", help="What the function should do")
     code.add_argument("--function", required=True, help="Function name")
@@ -313,9 +316,12 @@ def main():
             emit(evaluate_instruction(args.run, args.data, args.output))
         elif args.command == "code-eval":
             from .coder import evaluate_code
-            output = args.output or str(Path(args.run) / "code-eval.json")
-            emit(evaluate_code(args.run, output, args.samples, args.per_family, args.device,
-                               agent=args.agent, repair_rounds=args.repair_rounds))
+            name = "code-eval.json" if args.suite == "core" else "exam-eval.json"
+            output = args.output or str(Path(args.run) / name)
+            per_family = args.per_family if args.suite == "core" or args.per_family != 2 else 1
+            emit(evaluate_code(args.run, output, args.samples, per_family, args.device,
+                               agent=args.agent, repair_rounds=args.repair_rounds, suite=args.suite,
+                               max_tokens=args.max_tokens))
         elif args.command == "code":
             from .coder import CodeModel, Library, solve
             from .tasks import LANGUAGES

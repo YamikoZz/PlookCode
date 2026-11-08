@@ -50,6 +50,9 @@ def eval_ngrams(raw):
     for split in ("train", "test", "validation", "prompt"):
         texts += [r["text"] for r in pq.read_table(raw / "eval" / f"mbpp-{split}.parquet").to_pylist()]
     grams, short = set(), set()
+    from localbrain.exam import exam  # our Lua/TS/JS exam must stay unseen too (description part only)
+    for task in exam():
+        grams |= ngrams(task["prompt"].split(" that ", 1)[1].split("\n")[0])
     for text in texts:
         w = words(text)
         if len(w) >= N:
@@ -68,8 +71,9 @@ def overlaps_eval(question, contaminated):
 
 
 def held_out_names():
+    from localbrain.exam import FAMILIES as EXAM
     from localbrain.tasks import FAMILIES, HELD_OUT
-    return {name for fam in HELD_OUT for name in FAMILIES[fam]["names"]}
+    return {name for fam in HELD_OUT for name in FAMILIES[fam]["names"]} | set(EXAM)
 
 
 def fence_language(answer):

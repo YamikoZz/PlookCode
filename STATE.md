@@ -131,6 +131,14 @@
   วัด batch 8 accum 32: 23.6 วิ/step (batch 4 = 23.9) เร็วขึ้นแค่ ~1%, VRAM 16.3 GiB -> GPU เต็มกำลังแล้ว ใช้ batch 4
   งบจริง: 7,600 x 23.6s ~= 50 ชม. x 1.94/ชม. ~= 97 units > ที่มี 94 -> ผู้ใช้ต้องเติมเอง ~10-15 units
   สร้าง corpus 4B ใหม่บน CPU (0.08/ชม.) ลง Drive ครั้งเดียว ใช้ซ้ำทุก session (resume ต้องใช้ meta.json เดิม)
+- 2026-11-08 ข้อสอบใหม่ `localbrain/exam.py`: 30 แบบ × Lua/TS/JS = 90 ข้อ, 8 เทสต์/ข้อ, ห้ามใช้เทรน
+  (ยากกว่า tasks.py: grid, inversions, bucket, caesar, camel_to_snake ฯลฯ; ไม่คืน index เพราะ Lua เริ่ม 1)
+  วัดด้วย `code-eval --suite exam` (คำตอบยาวสุด 400 token) -> `exam-eval.json`
+  runner เพิ่ม TypeScript (Node stripTypeScriptTypes แล้วรันแบบ JS; Colab node 22.23 ใช้ได้) และ Lua (blocklist + env ไม่มี io/os/load)
+  ตรวจคำตอบอ้างอิงบน Colab CPU (Lua 5.4.6): ผ่านครบ 90/90; เทสต์ 88 ข้อผ่าน (Lua 2 ข้อรันบน Colab)
+  decontam: import_code_sft ตัดแถวที่ใช้ชื่อฟังก์ชัน/ข้อความเดียวกับข้อสอบ -> hf-code 228,453 -> 228,331 (-122 Python)
+- 2026-11-08 ตรวจ Lua ของข้อมูล AI บน Colab: 172/176 ผ่าน, 4 ข้อเสีย (batch003 l003/l009/l015/l016: คำตอบบั๊ก/เทสต์ผิด) ลบแล้ว
+  เหลือ batch 001-003 = 436 แถว verified ทั้งหมด (Lua 172, JS 132, TS 132)
 - 2026-11-08 รุ่น 200M: corpus 4.0B token เสร็จ+เก็บ Drive, pretrain เริ่ม 05:08; step 500 val 1.818 (step 250 = 2.415),
   ~23.8 วิ/step, คาดจบ ~10 พ.ย. 07:00; units 85.00 ณ 08:41 -> ต้องเติม ~10-15 ก่อนเย็น 9 พ.ย.
 - 2026-11-08 ข้อมูล AI (Codex) Lua/JS/TS: batch 003-010 รอบแรกถูกปฏิเสธ = แม่แบบของ batch 002 (เปลี่ยนแค่ prefix ชื่อ/ตัวเลข;

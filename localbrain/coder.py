@@ -45,10 +45,12 @@ class CodeModel:
         self.model.to(self.device).eval()
         self.tokenizer = Tokenizer.from_file(str(self.run / "tokenizer.json"))
         self.eos = self.tokenizer.token_to_id("[EOS]")
+        self.max_tokens = 200
 
-    def sample(self, question, n=1, temperature=0.8, top_k=40, max_tokens=200, greedy=False,
+    def sample(self, question, n=1, temperature=0.8, top_k=40, max_tokens=None, greedy=False,
                repetition_penalty=1.3, no_repeat_ngram=3, raw=False):
         ids = [self.tokenizer.token_to_id("[BOS]")] + self.tokenizer.encode(prompt_text(question)).ids
+        max_tokens = max_tokens or self.max_tokens
         room = self.cfg.context - len(ids)
         if room < 16:
             raise ValueError("Task description too long for the model context")
@@ -161,17 +163,27 @@ def solve(model, task, samples=8, repair_rounds=1, library=None, temperature=0.8
 PUBLIC_TESTS = 3  # agent mode: tests the agent may see as feedback; the rest stay hidden for scoring
 
 
-def evaluate_code(run, output, samples=8, per_family=2, device="auto", languages=("python", "javascript"),
-                  agent=False, repair_rounds=1):
+def evaluate_code(run, output, samples=8, per_family=2, device="auto", languages=None,
+                  agent=False, repair_rounds=1, suite="core", max_tokens=None):
     """Benchmark split into seen vs unseen task families.
 
     model-only: greedy pass@1 and pass@samples, one answer per try, no feedback.
     agent (optional): solve() samples, runs the PUBLIC tests and repairs from their error messages;
     the chosen code is then scored on ALL tests, so hidden tests decide. No solution library is used.
     """
-    from .tasks import benchmark
     model = CodeModel(run, device)
-    tasks = benchmark(per_family=per_family, languages=languages)
+    if suite == "exam":  # Lua/TS/JS tasks that never appear in training data (localbrain/exam.py)
+        from .exam import LANGUAGES as EXAM_LANGUAGES, exam
+        languages = tuple(languages or EXAM_LANGUAGES)
+        tasks = exam(per_family=per_family, languages=languages)
+        splits = ("exam",)
+        model.max_tokens = max_tokens or 400
+    else:
+        from .tasks import benchmark
+        languages = tuple(languages or ("python", "javascript"))
+        tasks = benchmark(per_family=per_family, languages=languages)
+        splits = ("seen", "unseen")
+        model.max_tokens = max_tokens or 200
     rows, began = [], time.time()
     for task in tasks:
         greedy = model.sample(task["prompt"], 1, greedy=True)[0]
@@ -202,14 +214,14 @@ def evaluate_code(run, output, samples=8, per_family=2, device="auto", languages
             out["agent_pass"] = round(sum(r["agent_pass"] for r in selected) / n, 3) if n else None
         return out
 
-    report = {"checkpoint_step": model.step, "run": str(run), "samples": samples,
+    report = {"checkpoint_step": model.step, "run": str(run), "suite": suite, "samples": samples,
               "modes": {"model_only": "pass@1_greedy / pass@k: model answers alone, no feedback",
                         "agent": (f"agent_pass: solve() with {repair_rounds} repair round(s), feedback from "
                                   f"{PUBLIC_TESTS} public tests, scored on all tests; no library")
                         if agent else "not run"},
               "prompt_example_in_tests": False,
               "seconds": round(time.time() - began, 1), "overall": summary(rows)}
-    for split in ("seen", "unseen"):
+    for split in splits:
         for language in languages:
             report[f"{split}/{language}"] = summary([r for r in rows if r["split"] == split
                                                      and r["language"] == language])

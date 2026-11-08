@@ -56,7 +56,8 @@ Training data is decontaminated against both: the filter catches 164/164 and 500
 |---|---|
 | `localbrain/model.py` | Decoder-only Transformer: RoPE, RMSNorm, QK-Norm, ReLU² MLP, tied embeddings, GQA |
 | `localbrain/train.py`, `optim.py` | Training with resume, Muon optimizer, warmup–stable–decay schedule, bf16, `torch.compile` |
-| `localbrain/tasks.py`, `runner.py`, `coder.py` | Verifiable coding tasks, a sandboxed test runner, the sample→test→repair loop, `code-eval` |
+| `localbrain/tasks.py`, `runner.py`, `coder.py` | Verifiable coding tasks, a sandboxed test runner (Python, JS, TS, Lua), the sample→test→repair loop, `code-eval` |
+| `localbrain/exam.py` | Exam suite: 30 harder task types × Lua/TS/JS, never used in training (`code-eval --suite exam`) |
 | `localbrain/agent.py`, `patch.py`, `projindex.py` | Project agent: index, search, SEARCH/REPLACE patches, run tests, roll back, remember |
 | `localbrain/knowledge.py`, `webtools.py` | SQLite FTS5 knowledge base, web search with cache |
 | `scripts/retrain.py` | One-command pipeline: pretrain → anneal → SFT → eval (resumable) |
@@ -72,7 +73,7 @@ model yourself on a free or cheap Colab T4.
 python -m venv .venv
 # install a PyTorch build for your GPU/CPU: https://pytorch.org/get-started/locally/
 .venv/bin/pip install -e .            # Windows: .venv\Scripts\pip install -e .
-python -m unittest discover tests     # 75 tests
+python -m unittest discover tests     # 88 tests (Lua ones need a lua interpreter)
 
 # full pipeline (pretrain -> anneal -> SFT -> eval); see notebooks/README.md for Colab
 python scripts/retrain.py

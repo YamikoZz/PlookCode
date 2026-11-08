@@ -6,6 +6,8 @@ boundary like a VM or container -- see README):
   * Python: audit hook blocks file/network/process/ctypes events after startup
   * JavaScript: Node permission model (no fs writes, child processes, workers)
     and dangerous globals shadowed
+  * TypeScript: types stripped by Node's built-in stripper (parsing only), then run as JavaScript
+  * Lua: token blocklist, then loaded as text into an environment without io/os/load/require/debug
   * separate process in an empty temporary directory, minimal environment
   * wall-clock timeout, output cap, and on Windows a Job Object limiting memory
     and forbidding child processes (POSIX: rlimits)
@@ -33,6 +35,10 @@ PY_BANNED_NAMES = {"open", "exec", "eval", "compile", "__import__", "globals", "
 JS_BANNED = re.compile(r"\b(require|import|process|globalThis|global|eval|Function|constructor|"
                        r"__proto__|prototype\s*\.\s*constructor|fetch|WebSocket|Worker|"
                        r"Deno|Bun|module|exports|setInterval)\b")
+
+
+LUA_BANNED = re.compile(r"\b(require|dofile|loadfile|loadstring|load|os|io|debug|package|"
+                        r"collectgarbage|setfenv|getfenv|_G)\b")
 
 
 class Rejected(ValueError):
@@ -63,6 +69,12 @@ def check_python(code):
 
 def check_javascript(code):
     match = JS_BANNED.search(code)
+    if match:
+        raise Rejected(f"use of '{match.group(0)}' is not allowed")
+
+
+def check_lua(code):
+    match = LUA_BANNED.search(code)
     if match:
         raise Rejected(f"use of '{match.group(0)}' is not allowed")
 
@@ -160,6 +172,167 @@ if (__fn === undefined) {
 '''
 
 
+LUA_HARNESS = r'''
+local out = io.stdout
+local fh = io.open(arg[1], "rb"); local src = fh:read("*a"); fh:close()
+local name = arg[2]
+local CASES = %(cases)s
+local unpack = table.unpack or unpack
+
+local function enc(v)
+  local t = type(v)
+  if v == nil then return "null"
+  elseif t == "boolean" then return tostring(v)
+  elseif t == "number" then
+    if v ~= v or v == math.huge or v == -math.huge then return "null" end
+    if (math.type and math.type(v) == "integer") or (v == math.floor(v) and math.abs(v) < 2^53) then
+      return string.format("%%d", v)
+    end
+    return string.format("%%.17g", v)
+  elseif t == "string" then
+    return '"' .. (v:gsub('[%%c"\\]', function(c) return string.format("\\u%%04x", c:byte()) end)) .. '"'
+  elseif t == "table" then
+    local n, count = #v, 0
+    for _ in pairs(v) do count = count + 1 end
+    if count == n then
+      local parts = {}
+      for i = 1, n do parts[i] = enc(v[i]) end
+      return "[" .. table.concat(parts, ",") .. "]"
+    end
+    local keys, parts = {}, {}
+    for k in pairs(v) do keys[#keys + 1] = k end
+    table.sort(keys, function(p, q) return tostring(p) < tostring(q) end)
+    for _, k in ipairs(keys) do parts[#parts + 1] = enc(tostring(k)) .. ":" .. enc(v[k]) end
+    return "{" .. table.concat(parts, ",") .. "}"
+  end
+  return '"<' .. t .. '>"'
+end
+
+local function report(status, passed, case, message)
+  local s = '{"status":' .. enc(status) .. ',"passed":' .. passed
+  if case then s = s .. ',"case":' .. case end
+  if message then s = s .. ',"message":' .. enc(message) end
+  out:write("@@RESULT@@" .. s .. "}\n"); out:flush()
+end
+
+local function copy(t) local r = {} for k, v in pairs(t) do r[k] = v end return r end
+local env = {math = copy(math), string = copy(string), table = copy(table), utf8 = utf8 and copy(utf8),
+  pairs = pairs, ipairs = ipairs, next = next, select = select, tostring = tostring, tonumber = tonumber,
+  type = type, error = error, pcall = pcall, assert = assert, unpack = unpack, setmetatable = setmetatable,
+  getmetatable = getmetatable, rawequal = rawequal, rawget = rawget, rawset = rawset, rawlen = rawlen,
+  print = function() end}
+env.string.dump = nil
+local load = load
+io, os, debug, package, require, dofile, loadfile = nil, nil, nil, nil, nil, nil, nil
+
+local chunk, err = load(src .. "\nreturn " .. name, "=solution", "t", env)
+if not chunk then chunk, err = load(src, "=solution", "t", env) end
+if not chunk then report("error", 0, nil, tostring(err)) return end
+local ok, result = pcall(chunk)
+if not ok then report("error", 0, nil, tostring(result)) return end
+local fn = type(result) == "function" and result or env[name]
+if type(fn) ~= "function" then report("error", 0, nil, "function '" .. name .. "' is not defined") return end
+local passed = 0
+for i, c in ipairs(CASES) do
+  local shown = enc(c.args):sub(2, -2)
+  local args = {}
+  for j = 1, c.n do args[j] = c.args[j] end
+  local good, got = pcall(fn, unpack(args, 1, c.n))
+  if not good then
+    report("error", passed, i - 1, name .. "(" .. shown .. ") raised " .. tostring(got):sub(1, 200))
+    return
+  end
+  local g = enc(got)
+  if g ~= c.expected then
+    report("fail", passed, i - 1, name .. "(" .. shown .. ") returned " .. g:sub(1, 200) .. ", expected " .. c.expected:sub(1, 200))
+    return
+  end
+  passed = passed + 1
+end
+report("pass", passed)
+'''
+
+
+def lua_string(text):
+    """A Lua string literal (control characters as decimal escapes, UTF-8 kept as raw bytes)."""
+    out = []
+    for c in text:
+        if c in '"\\':
+            out.append("\\" + c)
+        elif ord(c) < 32 or ord(c) == 127:
+            out.append("\\%03d" % ord(c))
+        else:
+            out.append(c)
+    return '"' + "".join(out) + '"'
+
+
+def lua_literal(value):
+    """A JSON value as a Lua constructor (lists -> array tables, dicts -> keyed tables)."""
+    if value is None:
+        return "nil"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, str):
+        return lua_string(value)
+    if isinstance(value, list):
+        return "{" + ", ".join(lua_literal(v) for v in value) + "}"
+    return "{" + ", ".join(f"[{lua_string(str(k))}] = {lua_literal(v)}" for k, v in value.items()) + "}"
+
+
+def lua_expected(value):
+    """The expected value encoded exactly like the Lua harness encodes results."""
+    if isinstance(value, float) and value.is_integer() and abs(value) < 2 ** 53:
+        value = int(value)
+    if isinstance(value, list):
+        return "[" + ",".join(lua_expected(v) for v in value) + "]"
+    if isinstance(value, dict):
+        return "{" + ",".join(json.dumps(str(k)) + ":" + lua_expected(v) for k, v in
+                              sorted(value.items(), key=lambda kv: str(kv[0]))) + "}" if value else "[]"
+    if isinstance(value, str):
+        return '"' + "".join(f"\\u{ord(c):04x}" if ord(c) < 32 or c in '"\\' or ord(c) == 127 else c
+                             for c in value) + '"'
+    if isinstance(value, float):
+        return "%.17g" % value
+    return json.dumps(value)
+
+
+def lua_cases(cases):
+    rows = [f"{{args = {lua_literal(c['args'])}, n = {len(c['args'])}, expected = {lua_string(lua_expected(c['expected']))}}}"
+            for c in cases]
+    return "{" + ",\n".join(rows) + "}"
+
+
+_TS_STRIP = ("const m = require('module'); let s = ''; process.stdin.setEncoding('utf8');"
+             "process.stdin.on('data', d => s += d).on('end', () => {"
+             "try { process.stdout.write('OK' + m.stripTypeScriptTypes(s)); }"
+             "catch (e) { process.stdout.write('ER' + String(e.message || e).slice(0, 300)); } });")
+_TS_SUPPORT = {}
+
+
+def typescript_supported(node):
+    if node not in _TS_SUPPORT:
+        try:
+            probe = subprocess.run([node, "-e", "process.stdout.write(typeof require('module')"
+                                    ".stripTypeScriptTypes === 'function' ? 'yes' : 'no')"],
+                                   capture_output=True, text=True, timeout=20)
+            _TS_SUPPORT[node] = probe.stdout.strip() == "yes"
+        except (OSError, subprocess.TimeoutExpired):
+            _TS_SUPPORT[node] = False
+    return _TS_SUPPORT[node]
+
+
+def strip_types(node, code):
+    """TypeScript -> JavaScript with Node's type stripper. It only parses the code, never runs it."""
+    done = subprocess.run([node, "-e", _TS_STRIP], input=code, capture_output=True, text=True,
+                          encoding="utf-8", timeout=20)
+    if done.stdout.startswith("OK"):
+        return done.stdout[2:], None
+    detail = done.stdout[2:] if done.stdout.startswith("ER") else done.stderr.strip()[:300]
+    return None, "TypeScript: " + detail
+
+
 def toolchains():
     """Interpreters this machine can use for checking solutions."""
     # A venv python.exe on Windows is a launcher that spawns a child; use the base interpreter.
@@ -167,6 +340,11 @@ def toolchains():
     node = shutil.which("node")
     if node:
         found["javascript"] = node
+        if typescript_supported(node):
+            found["typescript"] = node
+    lua = next((p for p in map(shutil.which, ("lua5.4", "lua54", "lua5.3", "lua")) if p), None)
+    if lua:
+        found["lua"] = lua
     return found
 
 
@@ -264,8 +442,13 @@ def run_tests(language, code, function, cases, timeout=5):
     if language not in chains:
         return {"status": "unavailable", "passed": 0, "total": total,
                 "message": f"no {language} toolchain installed"}
+    if language == "typescript":
+        code, problem = strip_types(chains["typescript"], code)
+        if problem:
+            return {"status": "error", "passed": 0, "total": total, "message": problem}
+        language = "javascript"
     try:
-        check_python(code) if language == "python" else check_javascript(code)
+        {"python": check_python, "lua": check_lua}.get(language, check_javascript)(code)
     except Rejected as error:
         return {"status": "rejected", "passed": 0, "total": total, "message": str(error)}
     with tempfile.TemporaryDirectory(prefix="lb-run-") as temp:
@@ -276,6 +459,10 @@ def run_tests(language, code, function, cases, timeout=5):
             (temp / "harness.py").write_text(PY_HARNESS % {"modules": sorted(PY_MODULES)}, encoding="utf-8")
             command = [chains["python"], "-I", "-S", "-B", str(temp / "harness.py"),
                        str(temp / "solution.py"), str(temp / "cases.json"), function]
+        elif language == "lua":
+            (temp / "solution.lua").write_text(code, encoding="utf-8")
+            (temp / "harness.lua").write_text(LUA_HARNESS % {"cases": lua_cases(cases)}, encoding="utf-8")
+            command = [chains["lua"], str(temp / "harness.lua"), str(temp / "solution.lua"), function]
         else:
             script = temp / "harness.js"
             script.write_text(JS_HARNESS % {"cases": json.dumps(cases), "name": json.dumps(function),

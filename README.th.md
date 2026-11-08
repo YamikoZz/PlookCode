@@ -152,6 +152,7 @@ HumanEval ในตารางเป็นค่าโดยประมาณ�
 │   ├── instruction.py         # prepare-instructions (dedup ตามคำถาม)
 │   ├── chatdata.py            # ผสมข้อมูลแชท OASST/Dolly/โค้ด
 │   ├── tasks.py               # โจทย์โค้ดที่ตรวจได้
+│   ├── exam.py                # ข้อสอบ Lua/TS/JS 30 แบบ (ห้ามใช้เทรน)
 │   ├── coder.py               # vibe coding: เขียน → รันเทสต์ → แก้ → คลังคำตอบ
 │   ├── runner.py              # รันเทสต์ Python/JS
 │   ├── playground.py          # หน้าต่างแชท

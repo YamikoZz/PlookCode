@@ -35,7 +35,8 @@
 | `localbrain/model.py` | Transformer v2 (RoPE, QK-Norm, RMSNorm, ReLU²) |
 | `localbrain/train.py` | เทรน / resume (`--resume`) / เริ่มจาก run อื่น (`--init`), WSD schedule |
 | `localbrain/optim.py` | Muon |
-| `localbrain/coder.py`, `runner.py`, `tasks.py` | vibe coding: เขียน → รันเทสต์ → แก้ → คลังคำตอบ, โจทย์ที่ตรวจได้ (49 แบบ = 41 seen + 8 held-out, Py/JS) |
+| `localbrain/coder.py`, `runner.py`, `tasks.py` | vibe coding: เขียน → รันเทสต์ → แก้ → คลังคำตอบ, โจทย์ที่ตรวจได้ (49 แบบ = 41 seen + 8 held-out, Py/JS); runner รัน Python/JS/TS/Lua |
+| `localbrain/exam.py` | ข้อสอบ 30 แบบ × Lua/TS/JS = 90 ข้อ **ห้ามใช้เทรน** (`code-eval --suite exam`); import_code_sft ตัดข้อที่ชื่อ/ข้อความซ้ำข้อสอบ |
 | `localbrain/knowledge.py`, `webtools.py` | คลัง SQLite FTS5, ค้นเว็บ + แคช |
 | `localbrain/projindex.py` | ดัชนีโปรเจกต์ระดับฟังก์ชัน (A1): `index-project`, `find-code` |
 | `localbrain/agent.py`, `experience.py` | Agent ครบ 9 ขั้น (`agent`): ค้น→สรุป→patch→เทสต์→วนแก้→จำ→รายงาน; สมองเสียบเปลี่ยนได้ (ModelBrain/ScriptedBrain) (A4) |
