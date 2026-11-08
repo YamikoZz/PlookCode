@@ -137,6 +137,9 @@
   runner เพิ่ม TypeScript (Node stripTypeScriptTypes แล้วรันแบบ JS; Colab node 22.23 ใช้ได้) และ Lua (blocklist + env ไม่มี io/os/load)
   ตรวจคำตอบอ้างอิงบน Colab CPU (Lua 5.4.6): ผ่านครบ 90/90; เทสต์ 88 ข้อผ่าน (Lua 2 ข้อรันบน Colab)
   decontam: import_code_sft ตัดแถวที่ใช้ชื่อฟังก์ชัน/ข้อความเดียวกับข้อสอบ -> hf-code 228,453 -> 228,331 (-122 Python)
+- 2026-11-08 เส้นฐานข้อสอบ exam (ผู้ใช้รันเองบนเครื่อง, รุ่น 20M run-english-sft2 step 1200, greedy): 0/90
+  (JS 0/30: fail 18 error 12; TS 0/30: เขียน Python แทน -> error 23 fail 7; Lua ไม่มีตัวรันในเครื่อง) ตามคาด
+  PowerShell 5.1 ตัดเครื่องหมาย " ใน --example -> ต้องใส่ \" (แก้ README แล้ว)
 - 2026-11-08 ตรวจ Lua ของข้อมูล AI บน Colab: 172/176 ผ่าน, 4 ข้อเสีย (batch003 l003/l009/l015/l016: คำตอบบั๊ก/เทสต์ผิด) ลบแล้ว
   เหลือ batch 001-003 = 436 แถว verified ทั้งหมด (Lua 172, JS 132, TS 132)
 - 2026-11-08 รุ่น 200M: corpus 4.0B token เสร็จ+เก็บ Drive, pretrain เริ่ม 05:08; step 500 val 1.818 (step 250 = 2.415),

@@ -83,6 +83,7 @@ python -m localbrain.cli code-eval --run workspace/<run> --agent
 
 # write a function, verified against tests
 python -m localbrain.cli code "return True if n is prime" --function is_prime --args n --example '{"args": [7], "expected": true}' --example '{"args": [8], "expected": false}' --run workspace/<run>
+# Windows PowerShell 5.1 drops the inner quotes; escape them: --example '{\"args\": [7], \"expected\": true}'
 ```
 
 ## Roadmap

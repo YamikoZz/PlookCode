@@ -106,7 +106,7 @@ HumanEval ในตารางเป็นค่าโดยประมาณ�
 # แชท
 .\.venv\Scripts\python.exe -m localbrain.cli playground --run workspace/run-english-sft2
 # vibe coding: เขียน → รันเทสต์ → แก้จนผ่าน
-.\.venv\Scripts\python.exe -m localbrain.cli code "return True if n is prime" --function is_prime --args n --example '{"args": [7], "expected": true}' --run workspace/run-english-sft2
+.\.venv\Scripts\python.exe -m localbrain.cli code "return True if n is prime" --function is_prime --args n --example '{\"args\": [7], \"expected\": true}' --run workspace/run-english-sft2
 ```
 
 ---
