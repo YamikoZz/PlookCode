@@ -1,6 +1,7 @@
 # 200M pipeline for one Colab L4 session. Safe to re-run on a new machine: every stage resumes from Drive.
 #   corpus: build-corpus --checkpoint (progress appended to Drive every 60 min)
-#   train : run dir on Drive, checkpoint every 150 steps (~60 min at 23.6 s/step)
+#   train : run dir on Drive, checkpoint every SAVE_EVERY steps (default 150 = ~60 min on L4 at 23.6 s/step;
+#           use SAVE_EVERY=600 on G4, ~40 min at ~4 s/step)
 D=/content/drive/MyDrive/LocalBrain-200m
 RUN=$D/run-200m
 log(){ echo "[$(date -u +%F' '%T)] $*" | tee -a $D/pipeline.log; }
@@ -37,14 +38,14 @@ if [ ! -f /content/data/meta.json ]; then
 fi
 cd /content/LocalBrain
 python - <<'PY'
-import json
+import json, os
 c = json.load(open("configs/code-pretrain-200m.json"))
-c["save_every"] = 150
+c["save_every"] = int(os.environ.get("SAVE_EVERY", "150"))
 json.dump(c, open("/content/pretrain-200m.json", "w"), indent=2)
 PY
 set +e
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 R=""; [ -f $RUN/latest.pt ] && R="--resume"
-log "PRETRAIN START resume='$R'"
+log "PRETRAIN START resume='$R' gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader) save_every=${SAVE_EVERY:-150}"
 python -m localbrain.cli train --data /content/data --run $RUN --config /content/pretrain-200m.json $R > /content/train.out 2>&1
 log "PRETRAIN-EXIT $?"
