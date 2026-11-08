@@ -11,7 +11,7 @@ the model to repair failures until the tests pass.
 | | |
 |---|---|
 | Current model | **20.5M parameters**, trained for **≈12 THB (≈$0.35)** of Colab compute |
-| Next model | **193M parameters** on 4.0B tokens, training now (≈97 Colab units, ≈$10) |
+| Next model | **193M parameters** on 4.0B tokens, training now on a Colab G4 GPU (step 1,000/7,600, val loss 1.58); ≈85 Colab units in total (≈$9, estimate) |
 | Honest scorecard | 66.8% on our in-domain suite, but **0% on held-out task types** (details below) |
 | Verified | Pass/fail of all 196 recorded answers re-checked independently, all matching |
 | Paper | [Technical report v0.1](docs/paper/LocalBrain-technical-report.md) |
@@ -41,6 +41,10 @@ Python/JavaScript, 8 hidden tests each. Code is executed; there is no LLM judge.
 
 **What this means:** at 20M parameters the model reproduces patterns it has seen and does not generalize. This
 score is model-only. The agent loop was not used.
+
+**New exam (Lua / TypeScript / JavaScript):** 30 harder task types × 3 languages = 90 tasks that are never used
+in training ([`localbrain/exam.py`](localbrain/exam.py), `code-eval --suite exam`). Baseline: the 20M model
+scores **0/90**. It writes Python when asked for TypeScript or Lua.
 
 After an external review we fixed a leak in the benchmark: the prompt example used to be one of the scored tests.
 We also added a separate agent-assisted score, which gets feedback from 3 public tests and is scored on all tests.
@@ -92,7 +96,7 @@ python -m localbrain.cli code "return True if n is prime" --function is_prime --
 |---|---|---|
 | G1 | 6.9M, Thai chat | done, failed (incoherent); taught us to pretrain and narrow the domain |
 | G2 | 20.5M, code | done; results above |
-| **G3** | **193M, code** | **training** on 4.0B tokens; SFT with ≈228K decontaminated examples plus extra Lua/TS/JS |
+| **G3** | **193M, code** | **training** on 4.0B tokens (moved L4 → G4 at step 750: 3.6 s/step, 6.5× faster); then SFT with ≈228K decontaminated examples plus 436 verified Lua/TS/JS |
 | Next | ≈700M–1B | depends on G3 results and funding; data quality matters more than size (see phi-1) |
 
 Target languages: Python and Lua first, JavaScript and TypeScript as a pair, less C/C++. Prompts are in English.
