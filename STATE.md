@@ -51,7 +51,9 @@
   และ HumanEval เท่าเดิม (~8%) -> dataset เป็นสาเหตุส่วนหนึ่งจริง แต่ยังไกลจากใช้งาน; ขนาดข้อมูลครู (16k) และ 210M อาจจำกัดอยู่
   decoding plain ดีกว่าเสมอ (ยังไม่เปลี่ยนในแชท รอผู้ใช้ตัดสิน). ผลทั้งหมด `workspace/ab/` (summary.json), run-B บน Drive `LocalBrain-200m/ab/run-B`
   ปิด G4 แล้ว ไม่มี session ค้าง, units เหลือ 61.27
-
+- 2026-11-09 ผู้ช่วยแยก (ไม่ใช่โมเดล PlookCode): Qwen2.5-Coder-7B-Instruct Q4_K_M (Apache-2.0 เช็ก HF API) ผ่าน llama.cpp b12207 CUDA 12.4
+  ไฟล์ใน workspace/llamacpp + workspace/models (ไม่ขึ้น git); เปิดด้วย Try-Qwen7B.cmd, system prompt configs/qwen7b-system.txt
+  (ตอบตรง ไม่ปฏิเสธงานโค้ดปกติ แต่ยังไม่ช่วยงานที่ทำร้ายผู้อื่น) GTX 1650S 4GB: ~6-8 token/วิ; ทดสอบ second-largest + rename script ถูก
 # PlookCode — สถานะล่าสุด 2026-11-06 (เย็น): ย้ายเทรนขึ้น Colab
 
 - เป้าหมายชัดเจนแล้ว: **Vibe Coding AI** สั่งงานภาษาอังกฤษ → เขียนโค้ด → รันตรวจ → แก้จนผ่าน
