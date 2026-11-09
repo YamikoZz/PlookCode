@@ -53,8 +53,31 @@ After an external review we fixed a leak in the benchmark: the prompt example us
 We also added a separate agent-assisted score, which gets feedback from 3 public tests and is scored on all tests.
 Section 5 of the [paper](docs/paper/PlookCode-technical-report.md) has the details.
 
+### 200M results and the dataset A/B test (2026-11-09)
+
+The 210M model (16 layers, width 1024, context 2048) was pretrained to val loss 1.229, then fine-tuned twice from the
+same base with the same config (1,500 steps). The two runs differ only in the 70,000 coding-task slots:
+**A** uses templated tasks from 41 families. **B** uses 16,093 teacher exercises (Qwen2.5-Coder-32B-Instruct,
+Apache-2.0, data only) covering 3,809 concepts. The exercise types are write, plan, debug and predict. Every exercise
+was verified by running it and decontaminated against the exam, held-out families and HumanEval. Scores are greedy
+pass@1, plain decoding (no repetition penalty):
+
+| Suite | A (templates) | B (diverse teacher data) |
+|---|---|---|
+| Exam, 90 unseen Lua/TS/JS tasks | 0/90 | **4/90** (pass@8 12/90) |
+| Held-out families in core (32) | 6/32 | **15/32** |
+| Templated families in core (164) | **164/164** | 71/164 |
+| HumanEval complete / instruct (164) | 7 / 15 | 6 / 13 |
+
+**What this means:**
+- Diverse data is the first change that moved the unseen tasks. The gain is small, and HumanEval did not move.
+- B's coding tokens are about 2× A's (14.25M vs 6.75M). This confound is not controlled.
+- The default decoding (repetition penalty 1.3, no-repeat 3-gram) broke a lot of code: HumanEval instruct is 2/164
+  with it and 15/164 without it.
+- Full numbers are in [STATE.md](STATE.md).
+
 **For context**, here are approximate published HumanEval scores (not measured by us): Codex-25M ≈3%, Codex-85M
-≈8%, CodeGen-350M-mono ≈13%, phi-1-small (350M) ≈45%. The 193M model will be evaluated on HumanEval and MBPP.
+≈8%, CodeGen-350M-mono ≈13%, phi-1-small (350M) ≈45%. Our 200M model scores ≈9% (instruct prompt, plain decoding).
 Training data is decontaminated against both: the filter catches 164/164 and 500/500 prompts.
 
 ## What's in the repo
@@ -99,7 +122,7 @@ python -m localbrain.cli code "return True if n is prime" --function is_prime --
 |---|---|---|
 | G1 | 6.9M, Thai chat | done, failed (incoherent); taught us to pretrain and narrow the domain |
 | G2 | 20.5M, code | done; results above |
-| **G3** | **193M, code** | **training** on 4.0B tokens (moved L4 → G4 at step 750: 3.6 s/step, 6.5× faster); then SFT with ≈228K decontaminated examples plus 436 verified Lua/TS/JS |
+| **G3** | **210M, code** | done: pretrain val 1.229 (7,600 steps on G4); SFT A/B test above. Unseen exam 0 → 4/90 with diverse data, HumanEval ≈9% |
 | Next | ≈700M–1B | depends on G3 results and funding; data quality matters more than size (see phi-1) |
 
 Target languages: Python and Lua first, JavaScript and TypeScript as a pair, less C/C++. Prompts are in English.
