@@ -1,3 +1,10 @@
+# PlookCode — สถานะล่าสุด 2026-11-09: Qwen LoRA pilot ติด Colab runtime disconnect
+
+- 2026-11-09 ทดลองเริ่ม QLoRA แยกสำหรับ `Qwen2.5-Coder-7B-Instruct` เพื่อลด false refusal ในงาน local/VPS ที่ระบุสิทธิ์ชัดเจน; ไม่ได้นำ weights เข้า PlookCode
+- สร้างสคริปต์ resumable `scripts/colab_qwen_refusal_lora.py/.sh` พร้อม baseline/adapter A/B และ ordinary-code replay
+- Colab G4 หลุด `RuntimeError: Connection was lost` 3 รอบระหว่าง setup/ดาวน์โหลด HF ก่อนโหลดโมเดล (GPU 0%, cache รอบสุดท้าย 12 MB); รอบสองแยก venv และรอบสามใช้ package ระบบเดิม+ติดตั้งเฉพาะ bitsandbytes ก็ยังหลุด จึงหยุด ไม่ retry แบบเดิม
+- balance 61.26 → 60.81 units (ใช้จริง 0.45); ยืนยัน `colab sessions` ไม่มี session ค้าง, rate 0/hr; ยังไม่มี adapter หรือผลฝึก
+
 # PlookCode — สถานะล่าสุด 2026-11-09: ตรวจสอบความปลอดภัยผู้ช่วย Qwen2.5-Coder-7B (REA + probe)
 
 - 2026-11-09 **Safety audit ผู้ช่วยแยก (Qwen2.5-Coder-7B-Instruct via llama.cpp)**: REA (`inspect_model_artifact`) ถอด GGUF จาก `workspace\models\qwen2.5-coder-7b-instruct-q4_k_m.gguf` (ev ใหม่): GGUF **v3**, little-endian, align 32, 4,683,073,536 bytes (≈Q4_K_M), arch **`qwen2`**, 28 blocks, ctx **131072 (128K)**, embed 3584 / ff 18944 / 28 heads / 4 KV heads, rope freq 1e6, eps ~1e-6; `general.name` = "Qwen2.5 Coder 7B Instruct GGUF", finetune = Instruct-GGUF, tokenizer ggml (gpt2/pre qwen2, 152,064 tok, eos 151645, bos/pad 151643, add_bos false); chat template **มี** (Qwen-style `<|im_start|>`/`<|im_end|>`, branch มี tools) + default system "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."; metadata 29 / tensors 339 / types 3, quantization_version 2, split 0. (static: ไม่ verify behavior/weights)
