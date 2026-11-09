@@ -122,16 +122,25 @@ def evaluate(tag):
     (OUT / f"eval-{tag}.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
     return {"count": len(rows), "refused": sum(x["refused"] for x in rows)}
 
-baseline = evaluate("baseline")
-examples = []
-for prompt in authorized + ordinary:
-    response = answer(prompt)
-    if response and not refusal_re.search(response):
-        examples.append({"prompt": prompt, "response": response})
+baseline_path = OUT / "eval-baseline.json"
+if baseline_path.exists():
+    baseline_rows = json.loads(baseline_path.read_text(encoding="utf-8"))
+    baseline = {"count": len(baseline_rows), "refused": sum(x["refused"] for x in baseline_rows)}
+else:
+    baseline = evaluate("baseline")
 
-(OUT / "training-data.jsonl").write_text(
-    "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in examples), encoding="utf-8"
-)
+training_path = OUT / "training-data.jsonl"
+if training_path.exists():
+    examples = [json.loads(line) for line in training_path.read_text(encoding="utf-8").splitlines() if line]
+else:
+    examples = []
+    for prompt in authorized + ordinary:
+        response = answer(prompt)
+        if response and not refusal_re.search(response):
+            examples.append({"prompt": prompt, "response": response})
+    training_path.write_text(
+        "".join(json.dumps(x, ensure_ascii=False) + "\n" for x in examples), encoding="utf-8"
+    )
 
 def encode(row):
     text = tokenizer.apply_chat_template(
@@ -175,7 +184,7 @@ args = TrainingArguments(
     per_device_train_batch_size=4,
     gradient_accumulation_steps=4,
     learning_rate=1e-4,
-    warmup_ratio=0.05,
+    warmup_steps=1,
     logging_steps=2,
     save_strategy="epoch",
     bf16=True,
@@ -187,6 +196,8 @@ trainer = Trainer(model=model, args=args, train_dataset=dataset, data_collator=C
 result = trainer.train()
 model.save_pretrained(OUT / "adapter")
 tokenizer.save_pretrained(OUT / "adapter")
+model.gradient_checkpointing_disable()
+model.eval()
 model.config.use_cache = True
 after = evaluate("adapter")
 

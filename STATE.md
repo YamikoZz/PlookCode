@@ -1,9 +1,10 @@
-# PlookCode — สถานะล่าสุด 2026-11-09: Qwen LoRA pilot ติด Colab runtime disconnect
+# PlookCode — สถานะล่าสุด 2026-11-09: Qwen false-refusal LoRA pilot เสร็จ แต่ยังไม่ดีขึ้น
 
-- 2026-11-09 ทดลองเริ่ม QLoRA แยกสำหรับ `Qwen2.5-Coder-7B-Instruct` เพื่อลด false refusal ในงาน local/VPS ที่ระบุสิทธิ์ชัดเจน; ไม่ได้นำ weights เข้า PlookCode
-- สร้างสคริปต์ resumable `scripts/colab_qwen_refusal_lora.py/.sh` พร้อม baseline/adapter A/B และ ordinary-code replay
-- Colab G4 หลุด `RuntimeError: Connection was lost` 3 รอบระหว่าง setup/ดาวน์โหลด HF ก่อนโหลดโมเดล (GPU 0%, cache รอบสุดท้าย 12 MB); รอบสองแยก venv และรอบสามใช้ package ระบบเดิม+ติดตั้งเฉพาะ bitsandbytes ก็ยังหลุด จึงหยุด ไม่ retry แบบเดิม
-- balance 61.26 → 60.81 units (ใช้จริง 0.45); ยืนยัน `colab sessions` ไม่มี session ค้าง, rate 0/hr; ยังไม่มี adapter หรือผลฝึก
+- 2026-11-09 ฝึก QLoRA แยกสำหรับ `Qwen2.5-Coder-7B-Instruct` บน Colab L4 สำเร็จ; ไม่ได้นำ weights เข้า PlookCode
+- self-distillation 128 ตัวอย่าง: authorized local/VPS/process/reverse-engineering 96 + ordinary-code replay 32; QLoRA 4-bit NF4, LoRA r=16/alpha=32/all-linear, 2 epochs = 16 steps, ~14.1 วิ/step; adapter 161,533,192 bytes, SHA256 `11a66ba995b7a0e975902460ff3b31ab973259ac21c35cbf86502f378e8c0e77`
+- A/B 10 prompts: baseline ปฏิเสธ 1/10, adapter ปฏิเสธ 1/10 เท่าเดิม (ข้อ patch conditional jump ใน toy executable ที่ผู้ใช้ compile เอง); pilot นี้ **ยังไม่ลด false refusal** และคำตอบ self-distill บางข้อไม่ตรงงาน จึงยังไม่ควรใช้แทนรุ่นเดิม
+- ผลอยู่ `workspace/qwen-authorized-lora/` (adapter + training-data + eval ทั้งสองชุด + summary); สคริปต์ resumable `scripts/colab_qwen_refusal_lora.py/.sh`
+- Colab: G4 setup ก่อนหน้าใช้ 0.45 units; L4 รอบสำเร็จ balance 60.81 → 59.21 (1.60 units); รวมงานนี้ 2.05 units. ปิดทุก session แล้ว ยืนยัน rate 0/hr
 
 # PlookCode — สถานะล่าสุด 2026-11-09: ตรวจสอบความปลอดภัยผู้ช่วย Qwen2.5-Coder-7B (REA + probe)
 
